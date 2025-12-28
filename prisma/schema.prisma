@@ -12,13 +12,39 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
-
 model User {
-  id String @id @default(uuid())
-  name String
-  email String @unique
-  password String
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt()
-  deleted_at DateTime?
+  id          String       @id @default(uuid())
+  name        String
+  email       String       @unique
+  password    String
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
+  deleted_at  DateTime?
+  businesses  Businesses[]
+}
+
+model Businesses {
+  id          String       @id @default(uuid())
+  user_id     String
+  name        String
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
+  deleted_at  DateTime?
+
+  owner       User         @relation(fields: [user_id], references: [id])
+  products    Products[]
+}
+
+model Products {
+  id           String     @id @default(uuid())
+  business_id  String
+  name         String
+  unit         String
+  image_url    String?
+  is_active    Boolean    @default(true)
+  created_at   DateTime   @default(now())
+  updated_at   DateTime   @updatedAt
+  deleted_at   DateTime?
+
+  business     Businesses @relation(fields: [business_id], references: [id])
 }
