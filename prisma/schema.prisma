@@ -12,7 +12,7 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
-model User {
+model Users {
   id          String       @id @default(uuid())
   name        String
   email       String       @unique
@@ -21,6 +21,9 @@ model User {
   updated_at  DateTime     @updatedAt
   deleted_at  DateTime?
   businesses  Businesses[]
+
+  @@index([email])
+  @@map("users")
 }
 
 model Businesses {
@@ -31,8 +34,11 @@ model Businesses {
   updated_at  DateTime     @updatedAt
   deleted_at  DateTime?
 
-  owner       User         @relation(fields: [user_id], references: [id])
+  owner       Users         @relation(fields: [user_id], references: [id])
   products    Products[]
+
+  @@index([user_id])
+  @@map("businesses")
 }
 
 model Products {
@@ -47,4 +53,19 @@ model Products {
   deleted_at   DateTime?
 
   business     Businesses @relation(fields: [business_id], references: [id])
+
+  @@index([business_id])
+  @@map("products")
+}
+
+enum AiRunStatus {
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+model AiRuns {
+  id String @id @default(uuid())
+  business_id String
+  status AiRunStatus
+  generated_at
 }
