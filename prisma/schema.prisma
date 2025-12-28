@@ -63,10 +63,39 @@ model Products {
   deleted_at   DateTime?
 
   business     Businesses @relation(fields: [business_id], references: [id])
+  stocks       Stocks[]
 
   @@index([business_id])
   @@map("products")
 }
+
+model TransactionItems {
+  id String @id @default(uuid())
+  transaction_id String
+  product_id String
+  quantity Int
+  created_at   DateTime   @default(now())
+  updated_at   DateTime   @updatedAt
+  deleted_at   DateTime?
+
+  @@map("transaction_items")
+  @@index([product_id])
+  @@index([transaction_id])
+}
+
+model Stocks {
+  id String @id @default(uuid())
+  product_id String
+  stock_on_hand Int
+  updated_at   DateTime   @updatedAt
+  deleted_at   DateTime?
+
+  product     Products @relation(fields: [product_id], references: [id])
+
+  @@index([product_id])
+  @@map("stocks")
+}
+
 
 enum AiRunStatus {
   PROCESSING
