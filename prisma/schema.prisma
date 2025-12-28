@@ -12,6 +12,7 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
 model Users {
   id          String       @id @default(uuid())
   name        String
@@ -36,9 +37,18 @@ model Businesses {
 
   owner       Users         @relation(fields: [user_id], references: [id])
   products    Products[]
+  ai_runs    AiRuns[] 
 
   @@index([user_id])
   @@map("businesses")
+}
+
+enum ProductUnit {
+  PCS
+  BOX
+  KG
+  LITER
+  PACK
 }
 
 model Products {
@@ -46,7 +56,7 @@ model Products {
   business_id  String
   name         String
   unit         String
-  image_url    String?
+  image_url    String? // Cloudflare CDN url
   is_active    Boolean    @default(true)
   created_at   DateTime   @default(now())
   updated_at   DateTime   @updatedAt
@@ -63,9 +73,19 @@ enum AiRunStatus {
   COMPLETED
   FAILED
 }
+
 model AiRuns {
   id String @id @default(uuid())
   business_id String
   status AiRunStatus
-  generated_at
+  generated_at DateTime
+  error_message String @db.Text
+  created_at   DateTime   @default(now())
+  updated_at   DateTime   @updatedAt
+  deleted_at   DateTime?
+
+  business     Businesses   @relation(fields: [business_id], references: [id])
+
+  @@map("ai_runs")
+  @@index([business_id])
 }
