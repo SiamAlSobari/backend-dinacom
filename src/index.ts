@@ -28,8 +28,12 @@ app.onError((err, c) => {
 });
 
 // Route
- 
+
 // End Route
+
+
+
+// Mulai server
 serve({
   fetch: app.fetch,
   port: 3000
