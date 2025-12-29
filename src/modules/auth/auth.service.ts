@@ -1,4 +1,4 @@
-import { jwtSeccret } from "../../common/utils/env.js";
+import { JWT_SECRET } from "../../common/utils/env.js";
 import { comparePassword, hashPassword } from "../../common/utils/hash.js";
 import { generateToken } from "../../common/utils/jwt.js";
 import type { UserRepository } from "../user/user.repository.js";
@@ -40,7 +40,7 @@ export class AuthService {
 
         // Masukin payload dan generate jwt token
         const payload = { id: user.id, email: user.email };
-        const token = await generateToken(payload, jwtSeccret);
+        const token = await generateToken(payload, JWT_SECRET);
         return token;
     }
 }
