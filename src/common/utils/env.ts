@@ -1,4 +1,4 @@
-import { config } from "doten";
+import { config } from "dotenv";
 
 config();
 
