@@ -16,20 +16,21 @@ datasource db {
 model Users {
   id          String       @id @default(uuid())
   name        String
-  email       String       @unique
+  email       String       
   password    String
   created_at  DateTime     @default(now())
   updated_at  DateTime     @updatedAt
   deleted_at  DateTime?
-  businesses  Businesses[]
+  businesses  Businesses?
 
-  @@index([email])
+  @@unique([email, deleted_at])
+  @@index([email, deleted_at])
   @@map("users")
 }
 
 model Businesses {
   id          String       @id @default(uuid())
-  user_id     String
+  user_id     String       @unique
   name        String
   created_at  DateTime     @default(now())
   updated_at  DateTime     @updatedAt
