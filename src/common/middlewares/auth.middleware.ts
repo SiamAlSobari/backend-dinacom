@@ -1,8 +1,8 @@
 import { getCookie } from "hono/cookie";
 import { verify } from "hono/jwt";
 import type { MiddlewareHandler } from "hono";
-import { jwtSeccret } from "../utils/env.js";
 import { HTTPException } from "hono/http-exception";
+import { JWT_SECRET } from "../utils/env.js";
 
 declare module "hono" {
     interface ContextVariableMap {
@@ -13,7 +13,7 @@ declare module "hono" {
 export const authMiddleware: MiddlewareHandler = async (c, next) => {
     const token = await getCookie(c, "token");
     if (!token) throw new HTTPException(401);
-    const payload = await verify(token, jwtSeccret);
+    const payload = await verify(token, JWT_SECRET);
     if (!payload) throw new HTTPException(401);
     c.set("user", payload as { id: string; email: string});
     await next();

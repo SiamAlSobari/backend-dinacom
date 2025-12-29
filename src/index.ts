@@ -4,6 +4,7 @@ import { cors } from 'hono/cors'
 import { HTTPException } from 'hono/http-exception'
 import { logger } from 'hono/logger'
 import { authController } from './modules/auth/auth.controller.js'
+import { businessController } from './modules/business/business.controller.js'
 
 const app = new Hono()
 
@@ -36,6 +37,7 @@ app.onError((err, c) => {
 
 // Route
 app.route('/auth', authController)
+app.route('business', businessController)
 // End Route
 
 
