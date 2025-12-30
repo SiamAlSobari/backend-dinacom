@@ -1,10 +1,10 @@
 import { Hono } from "hono";
 import { authMiddleware } from "../../common/middlewares/auth.middleware.js";
 import { sValidator } from "@hono/standard-validator";
-import { businessValidation } from "./business.validation.js";
 import { BusinessRepository } from "./business.repository.js";
 import { BusinessService } from "./business.service.js";
 import { HttpResponse } from "../../common/utils/response.js";
+import { createBusinessValidation, deleteBusinessValidation } from "./business.validation.js";
 
 
 // Instalsi classs business
@@ -16,7 +16,7 @@ export const businessController = new Hono()
     .post(
         "/",
         authMiddleware,
-        sValidator("json", businessValidation.create),
+        sValidator("json", createBusinessValidation),
         async (c) => {
             const { name } = c.req.valid('json')
             const user = c.get('user')
@@ -27,7 +27,7 @@ export const businessController = new Hono()
     .delete(
         '/:businessId',
         authMiddleware,
-        sValidator('param', businessValidation.delete),
+        sValidator('param', deleteBusinessValidation),
         async (c) => {
             const { businessId } = c.req.valid('param')
             const user = c.get('user')

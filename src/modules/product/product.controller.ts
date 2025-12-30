@@ -1,10 +1,10 @@
 import { Hono } from "hono";
 import { authMiddleware } from "../../common/middlewares/auth.middleware.js";
 import { sValidator } from "@hono/standard-validator";
-import { productValidation } from "./product.validate.js";
 import { HttpResponse } from "../../common/utils/response.js";
 import { ProductRepository } from "./product.repository.js";
 import { ProductService } from "./product.service.js";
+import { createProductValidation, deleteProductValidation, getProductPerBusinessValidation, getProductsValidation, updateProductParamValidation, updateProductValidation } from "./product.validatiton.js";
 
 
 // Instansi classs 
@@ -15,7 +15,7 @@ export const productController = new Hono()
     .post(
         "/",
         authMiddleware,
-        sValidator('form', productValidation.create),
+        sValidator('form', createProductValidation),
         async (c) => {
             const { image, business_id, name, unit, stock } = c.req.valid('form')
             const craete = await productService.createProduct(business_id,image,name,unit,stock)
@@ -25,7 +25,7 @@ export const productController = new Hono()
     .delete(
         '/:productId',
         authMiddleware,
-        sValidator('param', productValidation.delete),
+        sValidator('param', deleteProductValidation),
         async (c) => {
             const { productId } = c.req.valid('param')
             const deleteProduct = await productService.deleteProduct(productId)
@@ -35,8 +35,8 @@ export const productController = new Hono()
     .put(
         '/:productId',
         authMiddleware,
-        sValidator('param', productValidation.updateParam),
-        sValidator('form', productValidation.update),
+        sValidator('param', updateProductParamValidation),
+        sValidator('form', updateProductValidation),
         async (c) => {
             const { productId } = c.req.valid('param')
             const { image, name, unit } = c.req.valid('form')
@@ -47,8 +47,8 @@ export const productController = new Hono()
     .get(
         '/:businessId',
         authMiddleware,
-        sValidator('query', productValidation.getProducts),
-        sValidator('param', productValidation.getProductPerBusiness),
+        sValidator('query', getProductsValidation),
+        sValidator('param', getProductPerBusinessValidation),
         async (c) => {
             const { search } = c.req.valid('query')
             const { businessId } = c.req.valid('param')
