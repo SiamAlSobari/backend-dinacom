@@ -39,6 +39,8 @@ model Businesses {
   owner       Users         @relation(fields: [user_id], references: [id])
   products    Products[]
   ai_runs    AiRuns[] 
+  transactions Transactions[]
+
 
   @@index([user_id])
   @@map("businesses")
@@ -70,20 +72,6 @@ model Products {
   @@map("products")
 }
 
-model TransactionItems {
-  id String @id @default(uuid())
-  transaction_id String
-  product_id String
-  quantity Int
-  created_at   DateTime   @default(now())
-  updated_at   DateTime   @updatedAt
-  deleted_at   DateTime?
-
-  @@map("transaction_items")
-  @@index([product_id])
-  @@index([transaction_id])
-}
-
 model Stocks {
   id String @id @default(uuid())
   product_id String 
@@ -96,6 +84,46 @@ model Stocks {
   @@index([product_id])
   @@map("stocks")
 }
+
+enum TrxType {
+  SALE 
+  PURCHASE
+  ADJUSTMENT
+}
+
+model Transactions {
+  id String @id @default(uuid())
+  business_id String
+  trx_type TrxType
+  trx_date DateTime
+
+  created_at   DateTime   @default(now())
+  updated_at   DateTime   @updatedAt
+  deleted_at   DateTime?
+
+  business Businesses @relation(fields: [business_id], references: [id])
+  transaction_items TransactionItems[]
+
+  @@map("transactions")
+  @@index([business_id])
+}
+
+
+model TransactionItems {
+  id String @id @default(uuid())
+  transaction_id String
+  product_id String
+  quantity Int
+  created_at   DateTime   @default(now())
+  updated_at   DateTime   @updatedAt
+  deleted_at   DateTime?
+
+  transaction Transactions @relation(fields: [transaction_id], references: [id])
+  @@map("transaction_items")
+  @@index([product_id])
+  @@index([transaction_id])
+}
+
 
 
 enum AiRunStatus {
