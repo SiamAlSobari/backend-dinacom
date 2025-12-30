@@ -2,12 +2,12 @@ import { Hono } from "hono";
 import type { Context } from "hono/jsx";
 import { authMiddleware } from "../../common/middlewares/auth.middleware.js";
 import { sValidator } from "@hono/standard-validator";
-import { authValidation } from "./auth.validation.js";
 import { UserRepository } from "../user/user.repository.js";
 import { AuthService } from "./auth.service.js";
 import { HttpResponse } from "../../common/utils/response.js";
 import { setCookie } from "hono/cookie";
 import { guestMiddleware } from "../../common/middlewares/guest.middleware.js";
+import { loginAuthValidation, registerAuthValidation } from "./auth.validation.js";
 
 // Instansi class
 const userRepository = new UserRepository();
@@ -17,7 +17,7 @@ export const authController = new Hono()
     .post(
         "/register",
         guestMiddleware,
-        sValidator("json", authValidation.register),
+        sValidator("json", registerAuthValidation),
         async (c) => {
             const { email, name, password } = c.req.valid("json");
             const user = await authService.register(name, email, password);
@@ -27,7 +27,7 @@ export const authController = new Hono()
     .post(
         "/login",
         guestMiddleware,
-        sValidator("json", authValidation.login),
+        sValidator("json", loginAuthValidation),
         async (c) => {
             const { email, password } = c.req.valid("json");
             const user = await authService.login(email, password);
