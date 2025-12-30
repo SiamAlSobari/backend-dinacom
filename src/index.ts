@@ -5,6 +5,8 @@ import { HTTPException } from 'hono/http-exception'
 import { logger } from 'hono/logger'
 import { authController } from './modules/auth/auth.controller.js'
 import { businessController } from './modules/business/business.controller.js'
+import { xid } from 'zod'
+import { productController } from './modules/product/product.controller.js'
 
 const app = new Hono()
 
@@ -30,14 +32,15 @@ app.use(
 // Error handle middleware
 app.onError((err, c) => {
   if (err instanceof HTTPException) {
-    return err.getResponse()
+    return c.json({ success: false, message: err.message }, { status: err.status });
   }
   return c.json({ success: false, message: err.message }, { status: 500 });
 });
 
 // Route
 app.route('/auth', authController)
-app.route('business', businessController)
+app.route('/business', businessController)
+app.route('/products', productController)
 // End Route
 
 

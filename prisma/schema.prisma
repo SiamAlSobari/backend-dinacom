@@ -56,7 +56,7 @@ model Products {
   id           String     @id @default(uuid())
   business_id  String
   name         String
-  unit         String
+  unit         ProductUnit
   image_url    String? // Cloudflare CDN url
   is_active    Boolean    @default(true)
   created_at   DateTime   @default(now())
@@ -86,7 +86,7 @@ model TransactionItems {
 
 model Stocks {
   id String @id @default(uuid())
-  product_id String
+  product_id String 
   stock_on_hand Int
   updated_at   DateTime   @updatedAt
   deleted_at   DateTime?
