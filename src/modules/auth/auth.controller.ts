@@ -16,7 +16,7 @@ const authService = new AuthService(userRepository);
 export const authController = new Hono()
     .post(
         "/register",
-        guestMiddleware,
+      //  guestMiddleware,
         sValidator("json", registerAuthValidation),
         async (c) => {
             const { email, name, password } = c.req.valid("json");
@@ -26,7 +26,7 @@ export const authController = new Hono()
     )
     .post(
         "/login",
-        guestMiddleware,
+       // guestMiddleware,
         sValidator("json", loginAuthValidation),
         async (c) => {
             const { email, password } = c.req.valid("json");
