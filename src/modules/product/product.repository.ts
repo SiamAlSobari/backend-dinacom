@@ -1,8 +1,9 @@
+import type { ProductUnitEnum } from "../../common/enums/product.js";
 import { prisma } from "../../common/utils/db.js";
 
 export class ProductRepository {
 
-    public async create(businessId: string,imageUrl: string, name: string, unit: string, stock: number) {
+    public async create(businessId: string,imageUrl: string, name: string, unit: ProductUnitEnum, stock: number) {
         return await prisma.products.create({ 
             data: {
                 business_id: businessId,
@@ -18,7 +19,7 @@ export class ProductRepository {
         });
     }
 
-    public async update(productId: string, imageUrl: string, name: string, unit: string) {
+    public async update(productId: string, imageUrl: string, name: string, unit: ProductUnitEnum) {
         return await prisma.products.update({ 
             where: {
                 id: productId,
