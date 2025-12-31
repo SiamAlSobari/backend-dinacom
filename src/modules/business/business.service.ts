@@ -9,7 +9,7 @@ export class BusinessService {
     public async createBusiness(userId: string, name: string) {
         // cek business ada atau tidak
         const existingBusiness = await this.businessRepository.get(userId)
-        if (!existingBusiness) throw new HTTPException(400, { message: "Gagal membuat business" })
+        if (existingBusiness) throw new HTTPException(400, { message: "Gagal membuat business" })
 
         // Buat business
         const business = await this.businessRepository.create(userId, name)

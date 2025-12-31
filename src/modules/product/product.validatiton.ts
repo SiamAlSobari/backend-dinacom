@@ -26,7 +26,6 @@ export const getProductPerBusinessValidation = z.object({
 });
 
 export const updateProductValidation = z.object({
-    productId: z.string(),
     image: z
         .instanceof(File)
         .refine(
@@ -39,5 +38,5 @@ export const updateProductValidation = z.object({
 });
 
 export const updateProductParamValidation = z.object({
-    productId: z.string(),
+    productId: z.string().uuid(),
 });

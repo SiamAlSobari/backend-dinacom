@@ -7,6 +7,7 @@ import { authController } from './modules/auth/auth.controller.js'
 import { businessController } from './modules/business/business.controller.js'
 import { xid } from 'zod'
 import { productController } from './modules/product/product.controller.js'
+import { transactionController } from './modules/transaction/transaction.controller.js'
 
 const app = new Hono()
 
@@ -41,6 +42,7 @@ app.onError((err, c) => {
 app.route('/auth', authController)
 app.route('/business', businessController)
 app.route('/products', productController)
+app.route('/transactions', transactionController)
 // End Route
 
 
