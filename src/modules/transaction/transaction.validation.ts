@@ -15,9 +15,10 @@ export const BulkTransactionValidation = z.object({
 
 export const TransactionQueryValidation = z.object({
   type: z.nativeEnum(TrxTypeEnum).optional(),
-  from: z.string().datetime(),
-  to: z.string().datetime(),
-});
+  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+})
+
 
 export const DeleteTransactionValidation = z.object({
   transactionId: z.string().uuid(),

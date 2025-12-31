@@ -30,7 +30,7 @@ export const transactionController = new Hono()
         sValidator('query', TransactionQueryValidation),
         async (c) => {
             const { type, from, to } = c.req.valid('query')
-            const transactions = await transactionService.getTransactions(new Date(to), new Date(from), type as TrxTypeEnum)
+            const transactions = await transactionService.getTransactions(new Date(to  + "T23:59:59.999Z"), new Date(from + "T00:00:00.000Z"), type as TrxTypeEnum)
             return HttpResponse(c, "Berhasil mendapatkan transaksi", 200, transactions, null)
         }
     )
