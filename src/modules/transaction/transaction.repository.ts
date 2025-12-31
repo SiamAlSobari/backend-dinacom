@@ -9,7 +9,7 @@ export class TransactionRepository {
                 data: {
                     business_id: businessId,
                     trx_type: trxType,
-                    trx_date: trxDate
+                    trx_date: trxDate // ini manual // kalo nanti mau otomatis pake | new Date |
                 }
             })
 

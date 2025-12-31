@@ -20,7 +20,8 @@ export const transactionController = new Hono()
         sValidator('json', BulkTransactionValidation),
         async (c) => {
             const { business_id, items, trx_date, trx_type } = c.req.valid('json')
-            const transaction = await transactionService.createTransactionWithBulk(business_id, trx_type as TrxTypeEnum, new Date(trx_date), items)
+            const trxDate = new Date(`${trx_date}T00:00:00.000Z`)
+            const transaction = await transactionService.createTransactionWithBulk(business_id, trx_type as TrxTypeEnum, trxDate, items)
             return HttpResponse(c, "Berhasil membuat transaksi", 201, transaction, null)
         }
     )
