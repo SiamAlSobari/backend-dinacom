@@ -1,13 +1,14 @@
 import { HTTPException } from "hono/http-exception";
 import { uploadImageToR2 } from "../../common/utils/upload-to-r2.js";
 import type { ProductRepository } from "./product.repository.js";
+import type { ProductUnitEnum } from "../../common/enums/product.js";
 
 export class ProductService {
     constructor(
         private readonly productRepository: ProductRepository
     ) { }
 
-    public async createProduct(businessId: string, image: File, name: string, unit: string, stock: number) {
+    public async createProduct(businessId: string, image: File, name: string, unit: ProductUnitEnum, stock: number) {
         // upload gambar -> convert ke url
         const imageUrl = await uploadImageToR2(image)
         console.log(imageUrl)
@@ -19,7 +20,7 @@ export class ProductService {
         return product
     }
 
-    public async updateProduct(productId: string, image: File | null, name: string, unit: string) {
+    public async updateProduct(productId: string, image: File | null, name: string, unit: ProductUnitEnum) {
         // Ambil product
         const product = await this.productRepository.getProduct(productId)
         if (!product) throw new HTTPException(404, { message: "Product tidak ditemukan" })

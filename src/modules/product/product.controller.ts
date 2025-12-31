@@ -5,6 +5,7 @@ import { HttpResponse } from "../../common/utils/response.js";
 import { ProductRepository } from "./product.repository.js";
 import { ProductService } from "./product.service.js";
 import { createProductValidation, deleteProductValidation, getProductPerBusinessValidation, getProductsValidation, updateProductParamValidation, updateProductValidation } from "./product.validatiton.js";
+import type { ProductUnitEnum } from "../../common/enums/product.js";
 
 
 // Instansi classs 
@@ -18,7 +19,7 @@ export const productController = new Hono()
         sValidator('form', createProductValidation),
         async (c) => {
             const { image, business_id, name, unit, stock } = c.req.valid('form')
-            const craete = await productService.createProduct(business_id,image,name,unit,stock)
+            const craete = await productService.createProduct(business_id,image,name,unit as ProductUnitEnum,stock)
             return HttpResponse(c, "Berhasil membuat product", 201, craete, null)
         }
     )
@@ -40,7 +41,7 @@ export const productController = new Hono()
         async (c) => {
             const { productId } = c.req.valid('param')
             const { image, name, unit } = c.req.valid('form')
-            const updateProduct = await productService.updateProduct(productId,image || null,name,unit)
+            const updateProduct = await productService.updateProduct(productId,image || null,name,unit as ProductUnitEnum)
             return HttpResponse(c, "Berhasil mengahus product", 200, updateProduct, null)
         }
     )
