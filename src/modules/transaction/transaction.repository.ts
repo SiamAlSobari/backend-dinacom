@@ -1,17 +1,21 @@
+import type { Transactions } from "../../../generated/prisma/client.js";
 import { TrxTypeEnum } from "../../common/enums/transaction.js";
 import type { TransactionItem } from "../../common/interfaces/transaction.js";
 import { prisma } from "../../common/utils/db.js";
 
 export class TransactionRepository {
     public async createBulk(businessId: string, trxType: TrxTypeEnum, trxDate: Date, items: TransactionItem[]) {
-        const result = await prisma.$transaction(async (tx) => {
+        const res = [] as Transactions[]
+        await prisma.$transaction(async (tx) => {
             const trx = await tx.transactions.create({
                 data: {
                     business_id: businessId,
                     trx_type: trxType,
-                    trx_date: trxDate
+                    trx_date: trxDate // ini manual // kalo nanti mau otomatis pake | new Date |
                 }
             })
+
+            res.push(trx)
 
             for (const item of items) {
                 await tx.transactionItems.create({
@@ -50,7 +54,7 @@ export class TransactionRepository {
             })
         })
 
-        return result
+        return res
     }
 
     public async getTransactionsWithItems(from: Date, to: Date, type: TrxTypeEnum) {
@@ -77,7 +81,8 @@ export class TransactionRepository {
     }
 
     public async softDeleteAndRollback(transactionId: string) {
-        return await prisma.$transaction(async (tx) => {
+        let res : Transactions = {} as Transactions
+        await prisma.$transaction(async (tx) => {
             const trx = await tx.transactions.findFirstOrThrow({
                 where: {
                     id: transactionId,
@@ -91,6 +96,8 @@ export class TransactionRepository {
                     }
                 }
             })
+
+            res = trx
 
             await tx.transactions.update({
                 where: {
