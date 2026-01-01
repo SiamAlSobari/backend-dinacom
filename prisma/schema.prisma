@@ -14,14 +14,14 @@ datasource db {
 }
 
 model Users {
-  id          String       @id @default(uuid())
-  name        String
-  email       String       
-  password    String
-  created_at  DateTime     @default(now())
-  updated_at  DateTime     @updatedAt
-  deleted_at  DateTime?
-  businesses  Businesses?
+  id         String      @id @default(uuid())
+  name       String
+  email      String
+  password   String
+  created_at DateTime    @default(now())
+  updated_at DateTime    @updatedAt
+  deleted_at DateTime?
+  businesses Businesses?
 
   @@unique([email, deleted_at])
   @@index([email, deleted_at])
@@ -29,18 +29,17 @@ model Users {
 }
 
 model Businesses {
-  id          String       @id @default(uuid())
-  user_id     String       @unique
-  name        String
-  created_at  DateTime     @default(now())
-  updated_at  DateTime     @updatedAt
-  deleted_at  DateTime?
+  id         String    @id @default(uuid())
+  user_id    String    @unique
+  name       String
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
 
-  owner       Users         @relation(fields: [user_id], references: [id])
-  products    Products[]
-  ai_runs    AiRuns[] 
+  owner        Users          @relation(fields: [user_id], references: [id])
+  products     Products[]
+  ai_runs      AiRuns[]
   transactions Transactions[]
-
 
   @@index([user_id])
   @@map("businesses")
@@ -55,76 +54,75 @@ enum ProductUnit {
 }
 
 model Products {
-  id           String     @id @default(uuid())
-  business_id  String
-  name         String
-  unit         ProductUnit
-  image_url    String? // Cloudflare CDN url
-  is_active    Boolean    @default(true)
-  created_at   DateTime   @default(now())
-  updated_at   DateTime   @updatedAt
-  deleted_at   DateTime?
+  id          String      @id @default(uuid())
+  business_id String
+  name        String
+  unit        ProductUnit
+  image_url   String? // Cloudflare CDN url
+  is_active   Boolean     @default(true)
+  created_at  DateTime    @default(now())
+  updated_at  DateTime    @updatedAt
+  deleted_at  DateTime?
 
-  business     Businesses @relation(fields: [business_id], references: [id])
-  stocks       Stocks[]
+  business Businesses @relation(fields: [business_id], references: [id])
+  stocks   Stocks[]
+  ai_recommendations AiRecommendations[]
 
   @@index([business_id])
   @@map("products")
 }
 
 model Stocks {
-  id String @id @default(uuid())
-  product_id String 
+  id            String    @id @default(uuid())
+  product_id    String
   stock_on_hand Int
-  updated_at   DateTime   @updatedAt
-  deleted_at   DateTime?
+  updated_at    DateTime  @updatedAt
+  deleted_at    DateTime?
 
-  product     Products @relation(fields: [product_id], references: [id])
+  product Products @relation(fields: [product_id], references: [id])
 
   @@index([product_id])
   @@map("stocks")
 }
 
 enum TrxType {
-  SALE 
+  SALE
   PURCHASE
   ADJUSTMENT
 }
 
 model Transactions {
-  id String @id @default(uuid())
+  id          String   @id @default(uuid())
   business_id String
-  trx_type TrxType
-  trx_date DateTime
+  trx_type    TrxType
+  trx_date    DateTime
 
-  created_at   DateTime   @default(now())
-  updated_at   DateTime   @updatedAt
-  deleted_at   DateTime?
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
 
-  business Businesses @relation(fields: [business_id], references: [id])
+  business          Businesses         @relation(fields: [business_id], references: [id])
   transaction_items TransactionItems[]
 
-  @@map("transactions")
   @@index([business_id])
+  @@map("transactions")
 }
-
 
 model TransactionItems {
-  id String @id @default(uuid())
+  id             String    @id @default(uuid())
   transaction_id String
-  product_id String
-  quantity Int
-  created_at   DateTime   @default(now())
-  updated_at   DateTime   @updatedAt
-  deleted_at   DateTime?
+  product_id     String
+  quantity       Int
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+  deleted_at     DateTime?
 
   transaction Transactions @relation(fields: [transaction_id], references: [id])
-  @@map("transaction_items")
+
   @@index([product_id])
   @@index([transaction_id])
+  @@map("transaction_items")
 }
-
-
 
 enum AiRunStatus {
   PROCESSING
@@ -133,17 +131,101 @@ enum AiRunStatus {
 }
 
 model AiRuns {
-  id String @id @default(uuid())
-  business_id String
-  status AiRunStatus
-  generated_at DateTime
-  error_message String @db.Text
-  created_at   DateTime   @default(now())
-  updated_at   DateTime   @updatedAt
-  deleted_at   DateTime?
+  id            String      @id @default(uuid())
+  business_id   String
+  status        AiRunStatus
+  generated_at  DateTime
+  error_message String      @db.Text
+  created_at    DateTime    @default(now())
+  updated_at    DateTime    @updatedAt
+  deleted_at    DateTime?
 
-  business     Businesses   @relation(fields: [business_id], references: [id])
+  business Businesses @relation(fields: [business_id], references: [id])
 
-  @@map("ai_runs")
+  insights AiInsights[]
+  ai_recommendations  AiRecommendations[]
+
   @@index([business_id])
+  @@map("ai_runs")
+}
+
+model AiInsights {
+  id               String    @id @default(uuid())
+  ai_run_id        String
+  demand_pattern   String
+  demand_direction String
+  main_constraint  String
+  priorities       String
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+  deleted_at       DateTime?
+
+  ai_run AiRuns @relation(fields: [ai_run_id], references: [id], onDelete: Cascade)
+
+  @@index([ai_run_id])
+  @@map("ai_insights")
+}
+
+enum AiRecommendationsAction {
+  RESTOCK
+  WAIT
+}
+
+enum AiRecommendationsRiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum AiRecommendationsConfidence {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model AiRecommendations {
+  id String @id @default(uuid())
+  ai_run_id String
+  product_id String
+  action AiRecommendationsAction
+  qty_min Int
+  qty_max Int
+  risk_level AiRecommendationsRiskLevel
+  confidence AiRecommendationsConfidence
+  reason_text String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  deleted_at DateTime?
+
+  ai_run AiRuns @relation(fields: [ai_run_id], references: [id], onDelete: Cascade)
+  product Products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  ai_recommendations_actions AiRecommendationsActions[]
+  @@index([ai_run_id])
+  @@index([product_id])
+
+  @@map("ai_recommendations")
+}
+
+
+enum AiRecommendationsActionsActionType {
+  DONE
+  DELAY
+  IGNORE
+}
+
+model AiRecommendationsActions {
+  id String @id @default(uuid())
+  ai_recommendation_id String
+  action_type AiRecommendationsActionsActionType
+  note_text String
+  action_at DateTime
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  deleted_at DateTime?
+
+  ai_recommendation AiRecommendations @relation(fields: [ai_recommendation_id], references: [id], onDelete: Cascade)
+
+  @@index([ai_recommendation_id])
+  @@map("ai_recommendations_actions")
 }
