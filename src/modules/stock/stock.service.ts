@@ -9,4 +9,12 @@ export class StockService {
     public async setStock(businessId: string, items: SetStockItem[]) {
         return await this.stockRepository.setStock(businessId, items)
     }
+
+    public async deleteStock(stockId: string) {
+        return await this.stockRepository.softDeleteStock(stockId)
+    }
+
+    public async getStock(businessId: string) {
+        return await this.stockRepository.getStock(businessId)
+    }
 }

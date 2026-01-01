@@ -57,4 +57,32 @@ export class StockRepository {
             }
         })
     }
+
+    public async softDeleteStock(stockId: string) {
+        return await prisma.stocks.update({
+            where: {
+                deleted_at: null,
+                id: stockId
+            },
+            data: {
+                deleted_at: new Date()
+            }
+        })
+    }
+
+    public async getStock(businessId: string) {
+        return await prisma.products.findMany({
+            where: {
+                business_id: businessId,
+                deleted_at: null
+            },
+            include: {
+                stocks: {
+                    where: {
+                        deleted_at: null
+                    }
+                }
+            }
+        })
+    }
 }
