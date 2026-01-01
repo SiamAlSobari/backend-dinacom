@@ -49,6 +49,7 @@ model Subscriptions {
   user_id String
   plan_duration SubscriptionDuration
   start_date DateTime
+  status SubscriptionStatus
   end_date DateTime
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
