@@ -23,9 +23,72 @@ model Users {
   deleted_at DateTime?
   businesses Businesses?
 
+  subscriptions Subscriptions[]
+  payments      Payments[]
+
   @@unique([email, deleted_at])
   @@index([email, deleted_at])
   @@map("users")
+}
+
+enum SubscriptionDuration {
+  MONTHLY_1
+  MONTHLY_2
+  MONTHLY_3
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PENDING
+  CANCELLED
+  EXPIRED
+}
+
+model Subscriptions {
+  id String    @id @default(uuid())
+  user_id String
+  plan_duration SubscriptionDuration
+  start_date DateTime
+  end_date DateTime
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  deleted_at DateTime?
+
+  user Users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  payments Payments[]
+  @@unique([user_id, deleted_at])
+  @@index([user_id, deleted_at])
+  @@map("subscriptions")
+}
+
+enum PaymentStatus {
+  PENDING
+  CAPTURE
+  SENTTLEMENT
+  DENY
+  CANCEL
+  EXPIRED
+  REFUND
+}
+
+model Payments {
+  id String @id @default(uuid())
+  user_id String
+  subscription_id String
+  order_id String
+  gross_amount Int
+  payment_type String?
+  transaction_time DateTime?
+  status PaymentStatus
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  deleted_at DateTime?
+
+  subscription Subscriptions @relation(fields: [subscription_id], references: [id], onDelete: Cascade)
+  user Users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  @@unique([user_id, deleted_at])
+  @@index([user_id, deleted_at])
+  @@map("payments")
 }
 
 model Businesses {
