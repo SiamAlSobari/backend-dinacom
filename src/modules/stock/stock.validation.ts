@@ -9,3 +9,11 @@ export const SetStockValidation = z.object({
         })
     ).min(1)
 });
+
+export const DeleteStockValidation = z.object({
+    stockId: z.string().uuid(),
+});
+
+export const GetStockValidation = z.object({
+    businessId: z.string().uuid(),
+});

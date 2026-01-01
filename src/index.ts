@@ -8,6 +8,7 @@ import { businessController } from './modules/business/business.controller.js'
 import { xid } from 'zod'
 import { productController } from './modules/product/product.controller.js'
 import { transactionController } from './modules/transaction/transaction.controller.js'
+import { stockController } from './modules/stock/stock.controller.js'
 
 const app = new Hono()
 
@@ -38,11 +39,13 @@ app.onError((err, c) => {
   return c.json({ success: false, message: err.message }, { status: 500 });
 });
 
+
 // Route
 app.route('/auth', authController)
 app.route('/business', businessController)
 app.route('/products', productController)
 app.route('/transactions', transactionController)
+app.route('/stocks', stockController)
 // End Route
 
 

@@ -8,7 +8,6 @@ export class TransactionService {
         private readonly transactionRepository: TransactionRepository
     ) { }
 
-    // wkwkwk panggil orm di servie, sory sory 😅😅
     public async createTransactionWithBulk(businessId: string, trxType: TrxTypeEnum, trxDate: Date, items: TransactionItem[]) {
         const trx = await this.transactionRepository.createBulk(businessId, trxType, trxDate, items)
         return trx
