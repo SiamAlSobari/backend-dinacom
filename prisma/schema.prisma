@@ -65,7 +65,7 @@ model Subscriptions {
 enum PaymentStatus {
   PENDING
   CAPTURE
-  SENTTLEMENT
+  SETTLEMENT
   DENY
   CANCEL
   EXPIRED
@@ -87,7 +87,6 @@ model Payments {
 
   subscription Subscriptions @relation(fields: [subscription_id], references: [id], onDelete: Cascade)
   user Users @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  @@unique([user_id, deleted_at])
   @@index([user_id, deleted_at])
   @@map("payments")
 }

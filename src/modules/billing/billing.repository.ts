@@ -41,4 +41,18 @@ export class BillingRepository {
         });
     }
 
+
+    public async getPaymentByOrderId(orderId: string) {
+        return await prisma.payments.findFirst({
+            where: {
+                order_id: orderId,
+                deleted_at: null
+            },
+            include: {
+                subscription: true
+            }
+        });
+    }
+
+
 }

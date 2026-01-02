@@ -1,30 +1,24 @@
 import { snap } from "../../common/utils/midtrans.js";
 import type { BillingRepository } from "./billing.repository.js";
-import { addMonths } from "date-fns";
-
-
-
-const PRICE_MAP = {
-    MONTHLY_1: 100000,
-    MONTHLY_2: 180000,
-    MONTHLY_3: 250000,
-};
+import { SubscriptionDuration } from "../../../generated/prisma/enums.js";
+import { PRICE_MAP } from "../../common/constants/billing.js";
+import { calcEndDate } from "../../common/utils/billing.js";
 
 export class BillingService {
-    constructor(
-        private readonly billingRepository: BillingRepository
-    ) { }
+    constructor(private readonly billingRepository: BillingRepository) { }
 
-
-    public async getSubscription(userId: string) {
-        return await this.billingRepository.getActiveSubscription(userId)
+    async getSubscription(userId: string) {
+        return this.billingRepository.getActiveSubscription(userId);
     }
 
-    public async subscribe(userId: string, plan: keyof typeof PRICE_MAP) {
-        const start = new Date();
-        const end = addMonths(start, Number(plan.split("_")[1]));
+    async subscribe(userId: string, plan: SubscriptionDuration) {
+        const subscription = await this.billingRepository.createSubscription(
+            userId,
+            plan,
+            new Date(),
+            calcEndDate(plan)
+        );
 
-        const subscription = await this.billingRepository.createSubscription(userId, plan, start, end)
         const orderId = `ORD-${Date.now()}`;
         const amount = PRICE_MAP[plan];
 
@@ -33,8 +27,7 @@ export class BillingService {
                 order_id: orderId,
                 gross_amount: amount,
             },
-
-        })
+        });
 
         await this.billingRepository.createPayment({
             user_id: userId,
@@ -47,6 +40,5 @@ export class BillingService {
             snap_token: snapTx.token,
             redirect_url: snapTx.redirect_url,
         };
-
     }
 }
