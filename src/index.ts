@@ -9,6 +9,7 @@ import { xid } from 'zod'
 import { productController } from './modules/product/product.controller.js'
 import { transactionController } from './modules/transaction/transaction.controller.js'
 import { stockController } from './modules/stock/stock.controller.js'
+import { billingController } from './modules/billing/billing.controller.js'
 
 const app = new Hono()
 
@@ -46,6 +47,7 @@ app.route('/business', businessController)
 app.route('/products', productController)
 app.route('/transactions', transactionController)
 app.route('/stocks', stockController)
+app.route('/billing', billingController)
 // End Route
 
 
