@@ -25,14 +25,17 @@ export const businessController = new Hono()
         }
     )
     .delete(
-        '/:businessId',
+        '/',
         authMiddleware,
         sValidator('param', deleteBusinessValidation),
         async (c) => {
-            const { businessId } = c.req.valid('param')
             const user = c.get('user')
-            const business = await businessService.delete(user.id,businessId)
-            return HttpResponse(c, "Berhasil mengahus business", 200, business, null)
+            const business = await businessService.getBusiness(user.id);
+            if (!business) {
+                return HttpResponse(c, "business not found", 404, null, null);
+            }
+            await businessService.delete(user.id,business.id)
+            return HttpResponse(c, "Berhasil mengahus business", 200, null, null)
         }
     )
     .get(

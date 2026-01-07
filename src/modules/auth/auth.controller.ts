@@ -16,17 +16,15 @@ const authService = new AuthService(userRepository);
 export const authController = new Hono()
     .post(
         "/register",
-      //  guestMiddleware,
         sValidator("json", registerAuthValidation),
         async (c) => {
             const { email, name, password } = c.req.valid("json");
             const user = await authService.register(name, email, password);
-            return HttpResponse(c, "Register berhasil", 201, user.id, null);
+            return HttpResponse(c, "Register berhasil silahkan lakukan login untuk menggunakan fitur aplikasi kami", 201, null, null);
         }
     )
     .post(
         "/login",
-       // guestMiddleware,
         sValidator("json", loginAuthValidation),
         async (c) => {
             const { email, password } = c.req.valid("json");

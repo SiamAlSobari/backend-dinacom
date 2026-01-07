@@ -6,11 +6,15 @@ import { TransactionRepository } from "./transaction.repository.js";
 import { TransactionService } from "./transaction.service.js";
 import type { TrxTypeEnum } from "../../common/enums/transaction.js";
 import { HttpResponse } from "../../common/utils/response.js";
+import { BusinessRepository } from "../business/business.repository.js";
+import { BusinessService } from "../business/business.service.js";
 
 
 // Instansi class
 const transactionRepository = new TransactionRepository();
 const transactionService = new TransactionService(transactionRepository);
+const businessRepository = new BusinessRepository()
+const businessService = new BusinessService(businessRepository)
 
 
 export const transactionController = new Hono()
@@ -19,9 +23,14 @@ export const transactionController = new Hono()
         authMiddleware,
         sValidator('json', BulkTransactionValidation),
         async (c) => {
-            const { business_id, items, trx_date, trx_type } = c.req.valid('json')
+            const user = c.get('user')
+            const business = await businessService.getBusiness(user.id);
+            if (!business) {
+                return HttpResponse(c, "business not found", 404, null, null);
+            }
+            const { items, trx_date, trx_type } = c.req.valid('json')
             const trxDate = new Date(`${trx_date}T00:00:00.000Z`)
-            const transaction = await transactionService.createTransactionWithBulk(business_id, trx_type as TrxTypeEnum, trxDate, items)
+            const transaction = await transactionService.createTransactionWithBulk(business.id, trx_type as TrxTypeEnum, trxDate, items)
             return HttpResponse(c, "Berhasil membuat transaksi", 201, transaction, null)
         }
     )

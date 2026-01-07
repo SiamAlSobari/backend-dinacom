@@ -5,9 +5,14 @@ import { authMiddleware } from "../../common/middlewares/auth.middleware.js";
 import { sValidator } from "@hono/standard-validator";
 import { DeleteStockValidation, GetStockValidation, SetStockValidation } from "./stock.validation.js";
 import { HttpResponse } from "../../common/utils/response.js";
+import { BusinessRepository } from "../business/business.repository.js";
+import { BusinessService } from "../business/business.service.js";
 
 const stockRepository = new StockRepository()
- const stockService = new StockService(stockRepository)
+const stockService = new StockService(stockRepository)
+const businessRepository = new BusinessRepository()
+const businessService = new BusinessService(businessRepository)
+ 
 
  export const stockController = new Hono()
     .post(
@@ -15,18 +20,27 @@ const stockRepository = new StockRepository()
         authMiddleware,
         sValidator('json', SetStockValidation),
         async (c) => {
-            const { items,businessId } = c.req.valid('json')
-            const stock = await stockService.setStock(businessId,items)
+            const user = c.get('user')
+            const business = await businessService.getBusiness(user.id);
+            if (!business) {
+                return HttpResponse(c, "business not found", 404, null, null);
+            }
+            const { items } = c.req.valid('json')
+            const stock = await stockService.setStock(business.id,items)
             return HttpResponse(c, "Berhasil set stock", 201, stock, null)
         }
     )
     .get(
-        '/:businessId',
+        '/',
         authMiddleware,
         sValidator('param', GetStockValidation),
         async (c) => {
-            const { businessId } = c.req.valid('param')
-            const stock = await stockService.getStock(businessId)
+            const user = c.get('user')
+            const business = await businessService.getBusiness(user.id);
+            if (!business) {
+                return HttpResponse(c, "business not found", 404, null, null);
+            }
+            const stock = await stockService.getStock(business.id)
             return HttpResponse(c, "Berhasil mendapatkan stock per produk", 200, stock, null)
         }
     )

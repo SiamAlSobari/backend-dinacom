@@ -6,11 +6,14 @@ import { ProductRepository } from "./product.repository.js";
 import { ProductService } from "./product.service.js";
 import { createProductValidation, deleteProductValidation, getProductPerBusinessValidation, getProductsValidation, updateProductParamValidation, updateProductValidation } from "./product.validatiton.js";
 import type { ProductUnitEnum } from "../../common/enums/product.js";
+import { BusinessService } from "../business/business.service.js";
+import { BusinessRepository } from "../business/business.repository.js";
 
 
-// Instansi classs 
 const productRepository = new ProductRepository()
 const productService = new ProductService(productRepository)
+const businessRepository = new BusinessRepository()
+const businessService = new BusinessService(businessRepository)
 
 export const productController = new Hono()
     .post(
@@ -18,8 +21,13 @@ export const productController = new Hono()
         authMiddleware,
         sValidator('form', createProductValidation),
         async (c) => {
-            const { image, business_id, name, unit, stock } = c.req.valid('form')
-            const craete = await productService.createProduct(business_id,image,name,unit as ProductUnitEnum,stock)
+            const user = c.get('user')
+            const business = await businessService.getBusiness(user.id);
+                if (!business) {
+                return HttpResponse(c, "business not found", 404, null, null);
+            }
+            const { image, name, unit, stock } = c.req.valid('form')
+            const craete = await productService.createProduct(business.id ,image,name,unit as ProductUnitEnum,stock)
             return HttpResponse(c, "Berhasil membuat product", 201, craete, null)
         }
     )
@@ -46,14 +54,17 @@ export const productController = new Hono()
         }
     )
     .get(
-        '/:businessId',
+        '/',
         authMiddleware,
         sValidator('query', getProductsValidation),
-        sValidator('param', getProductPerBusinessValidation),
         async (c) => {
+            const user = c.get('user')
+            const business = await businessService.getBusiness(user.id);
+                if (!business) {
+                return HttpResponse(c, "business not found", 404, null, null);
+            }
             const { search } = c.req.valid('query')
-            const { businessId } = c.req.valid('param')
-            const products = await productService.getProducts(businessId,search || '')
+            const products = await productService.getProducts(business.id,search || '')
             return HttpResponse(c, "Berhasil mendapatkan product", 200, products, null)
         }   
     )
