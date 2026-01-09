@@ -26,8 +26,8 @@ export const productController = new Hono()
                 if (!business) {
                 return HttpResponse(c, "business not found", 404, null, null);
             }
-            const { image, name, unit, stock } = c.req.valid('form')
-            const craete = await productService.createProduct(business.id ,image,name,unit as ProductUnitEnum,stock)
+            const { image, name, unit, stock , price} = c.req.valid('form')
+            const craete = await productService.createProduct(business.id ,image,name,unit as ProductUnitEnum,stock, price)
             return HttpResponse(c, "Berhasil membuat product", 201, craete, null)
         }
     )

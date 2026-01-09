@@ -7,10 +7,10 @@ export const createProductValidation = z.object({
             (file) => ["image/jpeg", "image/png", "image/jpg"].includes(file.type),
             { message: "File harus berupa gambar" }
         ),
-    business_id: z.string(),
     name: z.string().min(3),
     unit: z.enum(["PCS", "KG", "LITER", "BOX", "PACK"]),
     stock: z.coerce.number(),
+    price: z.coerce.number().min(0),
 });
 
 export const deleteProductValidation = z.object({

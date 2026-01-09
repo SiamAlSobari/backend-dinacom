@@ -121,6 +121,7 @@ model Products {
   business_id String
   name        String
   unit        ProductUnit
+  price       Int
   image_url   String? // Cloudflare CDN url
   is_active   Boolean     @default(true)
   created_at  DateTime    @default(now())

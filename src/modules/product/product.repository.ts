@@ -3,13 +3,14 @@ import { prisma } from "../../common/utils/db.js";
 
 export class ProductRepository {
 
-    public async create(businessId: string,imageUrl: string, name: string, unit: ProductUnitEnum, stock: number) {
+    public async create(businessId: string,imageUrl: string, name: string, unit: ProductUnitEnum, stock: number, price: number) {
         return await prisma.products.create({ 
             data: {
                 business_id: businessId,
                 name,
                 unit,
                 image_url: imageUrl,
+                price,
                 stocks: {
                     create: {
                         stock_on_hand: stock

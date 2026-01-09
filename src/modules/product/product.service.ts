@@ -8,14 +8,14 @@ export class ProductService {
         private readonly productRepository: ProductRepository
     ) { }
 
-    public async createProduct(businessId: string, image: File, name: string, unit: ProductUnitEnum, stock: number) {
+    public async createProduct(businessId: string, image: File, name: string, unit: ProductUnitEnum, stock: number, price: number) {
         // upload gambar -> convert ke url
         const imageUrl = await uploadImageToR2(image)
         console.log(imageUrl)
         if (!imageUrl) throw new HTTPException(400, { message: "Gagal convert gambar ke url" })
 
         // Buat product
-        const product = await this.productRepository.create(businessId, imageUrl, name, unit, stock)
+        const product = await this.productRepository.create(businessId, imageUrl, name, unit, stock, price)
 
         return product
     }
