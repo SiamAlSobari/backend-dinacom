@@ -14,9 +14,8 @@ export const IndonesiaDateSchema = z
         return d;
     });
 
-export  const AiRangeValidation = z
+export const AiRangeValidation = z
     .object({
-        business_id: z.string().min(1),
         from: IndonesiaDateSchema,
         to: IndonesiaDateSchema,
     })
