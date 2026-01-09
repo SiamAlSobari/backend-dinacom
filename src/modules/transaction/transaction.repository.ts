@@ -2,34 +2,40 @@ import type { Transactions } from "../../../generated/prisma/client.js";
 import { TrxTypeEnum } from "../../common/enums/transaction.js";
 import type { TransactionItem } from "../../common/interfaces/transaction.js";
 import { prisma } from "../../common/utils/db.js";
+import type { TransactionItemType } from "./transaction.validation.js";
 
 export class TransactionRepository {
-    public async createBulk(businessId: string, trxType: TrxTypeEnum, trxDate: Date, items: TransactionItem[]) {
+    public async createBulk(businessId: string, items: TransactionItemType[]) {
         const res = [] as Transactions[]
         await prisma.$transaction(async (tx) => {
-            const trx = await tx.transactions.create({
-                data: {
-                    business_id: businessId,
-                    trx_type: trxType,
-                    trx_date: trxDate // ini manual // kalo nanti mau otomatis pake | new Date |
-                }
-            })
-
-            res.push(trx)
 
             for (const item of items) {
-                await tx.transactionItems.create({
+                const trx = await tx.transactions.create({
                     data: {
+                        business_id: businessId,
+                        trx_type: item.trx_type,
+                        trx_date: new Date(), // ini manual // kalo nanti mau otomatis pake | new Date |
+                        discount_amount: 0,
+                        total_amount: item.unit_price * item.quantity,
+                        payment_method: item.trx_method || "CASH",
+                        subtotal_amount: 0
+                    }
+                })
+                res.push(trx)
+                await tx.transactionItems.create({
+                    data:{
                         transaction_id: trx.id,
                         product_id: item.product_id,
-                        quantity: item.quantity
+                        quantity: item.quantity,
+                        unit_price: item.unit_price,
+                        line_price: item.unit_price * item.quantity
                     }
                 })
 
                 let delta = 0
-                if (trxType === TrxTypeEnum.SALE) delta = -item.quantity
-                if (trxType === TrxTypeEnum.PURCHASE) delta = item.quantity
-                if (trxType === TrxTypeEnum.ADJUSTMENT) delta = item.quantity
+                if (item.trx_type === TrxTypeEnum.SALE) delta = -item.quantity
+                if (item.trx_type === TrxTypeEnum.PURCHASE) delta = item.quantity
+                if (item.trx_type === TrxTypeEnum.ADJUSTMENT) delta = item.quantity
 
                 await tx.stocks.updateMany({
                     where: {

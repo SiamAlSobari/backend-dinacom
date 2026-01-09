@@ -28,9 +28,8 @@ export const transactionController = new Hono()
             if (!business) {
                 return HttpResponse(c, "business not found", 404, null, null);
             }
-            const { items, trx_date, trx_type } = c.req.valid('json')
-            const trxDate = new Date(`${trx_date}T00:00:00.000Z`)
-            const transaction = await transactionService.createTransactionWithBulk(business.id, trx_type as TrxTypeEnum, trxDate, items)
+            const { items, business_id } = c.req.valid('json')
+            const transaction = await transactionService.createTransactionWithBulk(business_id, items)
             return HttpResponse(c, "Berhasil membuat transaksi", 201, transaction, null)
         }
     )
@@ -40,7 +39,7 @@ export const transactionController = new Hono()
         sValidator('query', TransactionQueryValidation),
         async (c) => {
             const { type, from, to } = c.req.valid('query')
-            const transactions = await transactionService.getTransactions(new Date(to  + "T23:59:59.999Z"), new Date(from + "T00:00:00.000Z"), type as TrxTypeEnum)
+            const transactions = await transactionService.getTransactions(new Date(to + "T23:59:59.999Z"), new Date(from + "T00:00:00.000Z"), type as TrxTypeEnum)
             return HttpResponse(c, "Berhasil mendapatkan transaksi", 200, transactions, null)
         }
     )

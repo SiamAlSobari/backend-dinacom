@@ -154,11 +154,32 @@ enum TrxType {
   ADJUSTMENT
 }
 
+// enum TrxStatus {
+//   SUCCESS
+//   PENDING
+//   FAILED
+// }
+
+enum TrxPaymentMethod {
+  CASH
+  CREDIT
+  DEBIT
+}
+
 model Transactions {
   id          String   @id @default(uuid())
   business_id String
   trx_type    TrxType
   trx_date    DateTime
+
+  //status      TrxStatus
+  payment_method TrxPaymentMethod
+  paid_at    DateTime?
+
+  total_amount    Int
+  subtotal_amount Int
+  discount_amount Int
+
 
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
@@ -179,6 +200,9 @@ model TransactionItems {
   created_at     DateTime  @default(now())
   updated_at     DateTime  @updatedAt
   deleted_at     DateTime?
+
+  unit_price Int
+  line_price   Int
 
   transaction Transactions @relation(fields: [transaction_id], references: [id])
 

@@ -40,6 +40,7 @@ export const businessController = new Hono()
     )
     .get(
         '/',
+        authMiddleware,
         async (c) => {
             const user = c.get('user')
             const business = await businessService.getBusiness(user.id)
