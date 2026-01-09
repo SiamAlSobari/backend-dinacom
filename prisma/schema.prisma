@@ -223,30 +223,29 @@ model AiRuns {
   business_id   String
   status        AiRunStatus
   generated_at  DateTime
-  error_message String      @db.Text
+  error_message String?     @db.Text
   created_at    DateTime    @default(now())
   updated_at    DateTime    @updatedAt
   deleted_at    DateTime?
 
-  business Businesses @relation(fields: [business_id], references: [id])
-
-  insights AiInsights[]
-  ai_recommendations  AiRecommendations[]
+  business           Businesses          @relation(fields: [business_id], references: [id], onDelete: Cascade)
+  insights           AiInsights[]
+  ai_recommendations AiRecommendations[]
 
   @@index([business_id])
   @@map("ai_runs")
 }
 
 model AiInsights {
-  id               String    @id @default(uuid())
-  ai_run_id        String
-  demand_pattern   String
-  demand_direction String
-  main_constraint  String
-  priorities       String
-  created_at       DateTime  @default(now())
-  updated_at       DateTime  @updatedAt
-  deleted_at       DateTime?
+  id                     String    @id @default(uuid())
+  ai_run_id              String
+  pattern_trend_summary  String    @db.Text
+  urgent                 String    @db.Text
+  medium                 String    @db.Text
+  low                    String    @db.Text
+  created_at             DateTime  @default(now())
+  updated_at             DateTime  @updatedAt
+  deleted_at             DateTime?
 
   ai_run AiRuns @relation(fields: [ai_run_id], references: [id], onDelete: Cascade)
 
@@ -257,41 +256,36 @@ model AiInsights {
 enum AiRecommendationsAction {
   RESTOCK
   WAIT
+  REDUCE
 }
 
 enum AiRecommendationsRiskLevel {
-  LOW
-  MEDIUM
   HIGH
-}
-
-enum AiRecommendationsConfidence {
-  LOW
   MEDIUM
-  HIGH
+  LOW
 }
 
 model AiRecommendations {
-  id String @id @default(uuid())
-  ai_run_id String
-  product_id String
-  action AiRecommendationsAction
-  qty_min Int
-  qty_max Int
-  risk_level AiRecommendationsRiskLevel
-  confidence AiRecommendationsConfidence
-  reason_text String
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  deleted_at DateTime?
+  id                  String                      @id @default(uuid())
+  ai_run_id           String
+  product_id          String
+  current_stock       Int
+  recommended_action  AiRecommendationsAction
+  quantity_min        Int
+  quantity_max        Int
+  risk_level          AiRecommendationsRiskLevel
+  days_until_stockout Int
+  reason_text         String                      @db.Text
+  created_at          DateTime                    @default(now())
+  updated_at          DateTime                    @updatedAt
+  deleted_at          DateTime?
 
-  ai_run AiRuns @relation(fields: [ai_run_id], references: [id], onDelete: Cascade)
+  ai_run  AiRuns   @relation(fields: [ai_run_id], references: [id], onDelete: Cascade)
   product Products @relation(fields: [product_id], references: [id], onDelete: Cascade)
-
   ai_recommendations_actions AiRecommendationsActions[]
+
   @@index([ai_run_id])
   @@index([product_id])
-
   @@map("ai_recommendations")
 }
 

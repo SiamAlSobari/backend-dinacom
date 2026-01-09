@@ -26,7 +26,23 @@ export const aiController = new Hono()
                 return HttpResponse(c, "business not found", 404, null, null);
             }
             const { from, to } = c.req.valid('json');
-            const analyze = await aiService.buildAiDataset(business.id, from, to);
-            return HttpResponse(c, "analyze result", 201, analyze, null);
+            const analyze = await aiService.analyzeAI(business.id, from, to);
+            return HttpResponse(c, "AI analysis completed and saved successfully", 201, analyze, null);
+        }
+    )
+    .get(
+        "/latest",
+        authMiddleware,
+        async (c) => {
+            const user = c.get('user')
+            const business = await businessService.getBusiness(user.id);
+            if (!business) {
+                return HttpResponse(c, "business not found", 404, null, null);
+            }
+            const latestRun = await aiService.getLatestAiRun(business.id);
+            if (!latestRun) {
+                return HttpResponse(c, "No AI analysis found", 404, null, null);
+            }
+            return HttpResponse(c, "Latest AI analysis retrieved successfully", 200, latestRun, null);
         }
     )
