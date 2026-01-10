@@ -9,7 +9,11 @@ export class StockRepository {
                 data: {
                     business_id: businessId,
                     trx_type: "ADJUSTMENT",
-                    trx_date: new Date()
+                    trx_date: new Date(),
+                    discount_amount: 0,
+                    total_amount: 0,
+                    payment_method: "CASH",
+                    subtotal_amount: 0
                 }
             })
 
@@ -34,7 +38,9 @@ export class StockRepository {
                     data: {
                         transaction_id: trx.id,
                         product_id: item.product_id,
-                        quantity: delta
+                        quantity: delta,
+                        unit_price: 0,
+                        line_price: 0
                     }
                 });
 
