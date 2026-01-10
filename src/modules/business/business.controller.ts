@@ -44,6 +44,9 @@ export const businessController = new Hono()
         async (c) => {
             const user = c.get('user')
             const business = await businessService.getBusiness(user.id)
+            if (!business) {
+                return HttpResponse(c, "business not found", 404, null, null);
+            }
             return HttpResponse(c, "Berhasil mengahus business", 200, business, null)
         }
     )

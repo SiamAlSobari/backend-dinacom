@@ -8,10 +8,12 @@ import { createProductValidation, deleteProductValidation, getProductPerBusiness
 import type { ProductUnitEnum } from "../../common/enums/product.js";
 import { BusinessService } from "../business/business.service.js";
 import { BusinessRepository } from "../business/business.repository.js";
+import { TransactionRepository } from "../transaction/transaction.repository.js";
 
 
 const productRepository = new ProductRepository()
-const productService = new ProductService(productRepository)
+const transactionRepository = new TransactionRepository()
+const productService = new ProductService(productRepository, transactionRepository)
 const businessRepository = new BusinessRepository()
 const businessService = new BusinessService(businessRepository)
 
@@ -54,6 +56,19 @@ export const productController = new Hono()
         }
     )
     .get(
+        '/sold-stats',
+        authMiddleware,
+        async (c) => {
+            const user = c.get('user')
+            const business = await businessService.getBusiness(user.id);
+                if (!business) {
+                return HttpResponse(c, "business not found", 404, null, null);
+            }
+            const stock = await productService.getProductStock(business.id)
+            return HttpResponse(c, "Berhasil mendapatkan product", 200, stock, null)
+        }
+    )
+    .get(
         '/',
         authMiddleware,
         sValidator('query', getProductsValidation),
@@ -65,6 +80,34 @@ export const productController = new Hono()
             }
             const { search } = c.req.valid('query')
             const products = await productService.getProducts(business.id,search || '')
-            return HttpResponse(c, "Berhasil mendapatkan product", 200, products, null)
+            return HttpResponse(c, "Berhasil mendapatkan product analisis per minggu", 200, products, null)
         }   
+    )
+    .get(
+        '/top-selling',
+        authMiddleware,
+        async (c) => {
+            const { limit } = c.req.query()
+            const user = c.get('user')
+            const business = await businessService.getBusiness(user.id);
+                if (!business) {
+                return HttpResponse(c, "business not found", 404, null, null);
+            }
+            const products = await productService.topSellingProducts(business.id, Number(limit) || 5)
+            return HttpResponse(c, "Berhasil mendapatkan product top selling", 200, products, null)
+        }
+    )
+    .get(
+        '/top-selling-by-period',
+        authMiddleware,
+        async (c) => {
+            const { period, limit } = c.req.query()
+            const user = c.get('user')
+            const business = await businessService.getBusiness(user.id)
+            if (!business) {
+                return HttpResponse(c, "business not found", 404, null, null);
+            }
+            const products = await productService.topSellingProductsByPeriod(business.id, period as 'week' | 'month', Number(limit) || 5)
+            return HttpResponse(c, "Berhasil mendapatkan product top selling by period", 200, products, null)
+        }
     )

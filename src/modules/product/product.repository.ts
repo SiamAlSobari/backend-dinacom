@@ -3,8 +3,8 @@ import { prisma } from "../../common/utils/db.js";
 
 export class ProductRepository {
 
-    public async create(businessId: string,imageUrl: string, name: string, unit: ProductUnitEnum, stock: number, price: number) {
-        return await prisma.products.create({ 
+    public async create(businessId: string, imageUrl: string, name: string, unit: ProductUnitEnum, stock: number, price: number) {
+        return await prisma.products.create({
             data: {
                 business_id: businessId,
                 name,
@@ -21,7 +21,7 @@ export class ProductRepository {
     }
 
     public async update(productId: string, imageUrl: string, name: string, unit: ProductUnitEnum) {
-        return await prisma.products.update({ 
+        return await prisma.products.update({
             where: {
                 id: productId,
                 deleted_at: null
@@ -35,7 +35,7 @@ export class ProductRepository {
     }
 
     public async getProduct(productId: string) {
-        return await prisma.products.findFirst({ 
+        return await prisma.products.findFirst({
             where: {
                 id: productId,
                 deleted_at: null
@@ -51,7 +51,7 @@ export class ProductRepository {
     }
 
     public async getProducts(businessId: string, search: string) {
-        return await prisma.products.findMany({ 
+        return await prisma.products.findMany({
             where: {
                 business_id: businessId,
                 deleted_at: null,
@@ -75,7 +75,7 @@ export class ProductRepository {
     }
 
     public async softDelete(productId: string) {
-        return await prisma.products.update({ 
+        return await prisma.products.update({
             where: {
                 id: productId,
                 deleted_at: null
@@ -86,5 +86,19 @@ export class ProductRepository {
         });
     }
 
-    
+    public async getProductsByBusiness(businessId: string) {
+        return await prisma.products.findMany({
+            where: {
+                business_id: businessId,
+                deleted_at: null,
+            },
+            include: {
+                stocks: {
+                    where: { deleted_at: null },
+                    select: { stock_on_hand: true },
+                },
+            },
+        });
+    }
+
 }

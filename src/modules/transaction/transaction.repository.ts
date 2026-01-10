@@ -1,8 +1,11 @@
-import type { Transactions } from "../../../generated/prisma/client.js";
+import { Prisma, type Transactions } from "../../../generated/prisma/client.js";
 import { TrxTypeEnum } from "../../common/enums/transaction.js";
 import type { TransactionItem } from "../../common/interfaces/transaction.js";
 import { prisma } from "../../common/utils/db.js";
 import type { TransactionItemType } from "./transaction.validation.js";
+
+type Period = 'week' | 'month'
+
 
 export class TransactionRepository {
     public async createBulk(businessId: string, items: TransactionItemType[]) {
@@ -23,7 +26,7 @@ export class TransactionRepository {
                 })
                 res.push(trx)
                 await tx.transactionItems.create({
-                    data:{
+                    data: {
                         transaction_id: trx.id,
                         product_id: item.product_id,
                         quantity: item.quantity,
@@ -87,7 +90,7 @@ export class TransactionRepository {
     }
 
     public async softDeleteAndRollback(transactionId: string) {
-        let res : Transactions = {} as Transactions
+        let res: Transactions = {} as Transactions
         await prisma.$transaction(async (tx) => {
             const trx = await tx.transactions.findFirstOrThrow({
                 where: {
@@ -155,4 +158,174 @@ export class TransactionRepository {
             }
         })
     }
+
+
+    public async soldTotals(businessId: string) {
+        return await prisma.transactionItems.groupBy({
+            by: ['product_id'],
+            where: {
+                deleted_at: null,
+                transaction: {
+                    trx_type: 'SALE',
+                    deleted_at: null,
+                    business_id: businessId,
+                },
+            },
+            _sum: {
+                quantity: true,
+            },
+        })
+    }
+
+    public async topProductsSelling(businessId: string, limit: number) {
+        const topProducts = await prisma.transactionItems.groupBy({
+            by: ['product_id'],
+            where: {
+                deleted_at: null,
+                transaction: {
+                    trx_type: 'SALE',
+                    deleted_at: null,
+                    business_id: businessId,
+                },
+            },
+            _sum: {
+                quantity: true,
+            },
+            orderBy: {
+                _sum: {
+                    quantity: 'desc',
+                },
+            },
+            take: limit, // top 5
+        })
+        return topProducts
+    }
+
+    public async soldPerWeek(businessId: string) {
+        const soldPerWeek = await prisma.$queryRaw<
+            {
+                product_id: string
+                week: Date
+                total_sold: number
+            }[]
+        >`
+    SELECT 
+      ti.product_id,
+      date_trunc('week', t.trx_date) AS week,
+      SUM(ti.quantity)::int AS total_sold
+    FROM transaction_items ti
+    JOIN transactions t ON t.id = ti.transaction_id
+    WHERE 
+      t.trx_type = 'SALE'
+      AND t.deleted_at IS NULL
+      AND ti.deleted_at IS NULL
+      AND t.business_id = ${businessId}
+    GROUP BY ti.product_id, week
+    ORDER BY week ASC
+  `
+
+        return soldPerWeek
+    }
+
+    public async topSellingPerWeek(businessId: string) {
+        const result = await prisma.$queryRaw<
+            {
+                week: Date
+                product_id: string
+                product_name: string
+                price: number
+                total_sold: number
+            }[]
+        >`
+    SELECT 
+      week,
+      product_id,
+      product_name,
+      price,
+      total_sold
+    FROM (
+      SELECT 
+        date_trunc('week', t.trx_date) AS week,
+        p.id AS product_id,
+        p.name AS product_name,
+        p.price,
+        SUM(ti.quantity)::int AS total_sold,
+        ROW_NUMBER() OVER (
+          PARTITION BY date_trunc('week', t.trx_date)
+          ORDER BY SUM(ti.quantity) DESC
+        ) AS rn
+      FROM transaction_items ti
+      JOIN transactions t ON t.id = ti.transaction_id
+      JOIN products p ON p.id = ti.product_id
+      WHERE 
+        t.trx_type = 'SALE'
+        AND t.deleted_at IS NULL
+        AND ti.deleted_at IS NULL
+        AND p.deleted_at IS NULL
+        AND t.business_id = ${businessId}
+      GROUP BY week, p.id, p.name, p.price
+    ) ranked
+    WHERE rn = 1
+    ORDER BY week ASC
+  `
+        return result
+    }
+
+
+
+
+    public async topSellingByPeriod(
+        businessId: string,
+        period: 'week' | 'month' = 'week',
+        limit: number = 1
+    ) {
+        const trunc =
+            period === 'month'
+                ? Prisma.sql`'month'`
+                : Prisma.sql`'week'`
+
+        const result = await prisma.$queryRaw<
+            {
+                period: Date
+                product_id: string
+                product_name: string
+                price: number
+                total_sold: number
+                rank: number
+            }[]
+        >(Prisma.sql`
+    SELECT period, product_id, product_name, price, total_sold, rn AS rank
+    FROM (
+      SELECT 
+        date_trunc(${trunc}, t.trx_date) AS period,
+        p.id AS product_id,
+        p.name AS product_name,
+        p.price,
+        SUM(ti.quantity)::int AS total_sold,
+        ROW_NUMBER() OVER (
+          PARTITION BY date_trunc(${trunc}, t.trx_date)
+          ORDER BY SUM(ti.quantity) DESC
+        ) AS rn
+      FROM transaction_items ti
+      JOIN transactions t ON t.id = ti.transaction_id
+      JOIN products p ON p.id = ti.product_id
+      WHERE 
+        t.trx_type = 'SALE'
+        AND t.deleted_at IS NULL
+        AND ti.deleted_at IS NULL
+        AND p.deleted_at IS NULL
+        AND t.business_id = ${businessId}
+      GROUP BY 
+        date_trunc(${trunc}, t.trx_date),
+        p.id, p.name, p.price
+    ) ranked
+    WHERE rn <= ${limit}
+    ORDER BY period ASC, rn ASC
+  `)
+
+        return result
+    }
+
+
+
 }
