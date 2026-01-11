@@ -30,4 +30,32 @@ export class AnalyticRepository {
         return result
     }
 
+    public async soldPerWeekThisMonth(businessId: string) {
+        const result = await prisma.$queryRaw<
+            {
+                week: number
+                total_sold: number
+            }[]
+        >(Prisma.sql`
+    SELECT
+      EXTRACT(WEEK FROM t.trx_date)::int 
+        - EXTRACT(WEEK FROM date_trunc('month', t.trx_date))::int 
+        + 1 AS week,
+      COALESCE(SUM(ti.quantity), 0)::int AS total_sold
+    FROM transactions t
+    JOIN transaction_items ti ON ti.transaction_id = t.id
+    WHERE
+      t.trx_type = 'SALE'
+      AND t.deleted_at IS NULL
+      AND ti.deleted_at IS NULL
+      AND t.business_id = ${businessId}
+      AND t.trx_date >= date_trunc('month', now())
+      AND t.trx_date < date_trunc('month', now()) + interval '1 month'
+    GROUP BY week
+    ORDER BY week ASC
+  `)
+
+        return result
+    }
+
 }
