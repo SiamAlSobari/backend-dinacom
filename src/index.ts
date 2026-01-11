@@ -11,6 +11,7 @@ import { transactionController } from './modules/transaction/transaction.control
 import { stockController } from './modules/stock/stock.controller.js'
 import { billingController } from './modules/billing/billing.controller.js'
 import { aiController } from './modules/ai/ai.controller.js'
+import { AnalyticsController } from './modules/analytic/analytic.controller.js'
 
 const app = new Hono()
 
@@ -50,6 +51,7 @@ app.route('/transactions', transactionController)
 app.route('/stocks', stockController)
 app.route('/billing', billingController)
 app.route('/ai', aiController)
+app.route('/analytics', AnalyticsController);
 // End Route
 
 

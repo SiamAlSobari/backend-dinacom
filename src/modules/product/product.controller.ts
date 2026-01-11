@@ -83,31 +83,3 @@ export const productController = new Hono()
             return HttpResponse(c, "Berhasil mendapatkan product analisis per minggu", 200, products, null)
         }   
     )
-    .get(
-        '/top-selling',
-        authMiddleware,
-        async (c) => {
-            const { limit } = c.req.query()
-            const user = c.get('user')
-            const business = await businessService.getBusiness(user.id);
-                if (!business) {
-                return HttpResponse(c, "business not found", 404, null, null);
-            }
-            const products = await productService.topSellingProducts(business.id, Number(limit) || 5)
-            return HttpResponse(c, "Berhasil mendapatkan product top selling", 200, products, null)
-        }
-    )
-    .get(
-        '/top-selling-by-period',
-        authMiddleware,
-        async (c) => {
-            const { period, limit } = c.req.query()
-            const user = c.get('user')
-            const business = await businessService.getBusiness(user.id)
-            if (!business) {
-                return HttpResponse(c, "business not found", 404, null, null);
-            }
-            const products = await productService.topSellingProductsByPeriod(business.id, period as 'week' | 'month', Number(limit) || 5)
-            return HttpResponse(c, "Berhasil mendapatkan product top selling by period", 200, products, null)
-        }
-    )

@@ -227,104 +227,104 @@ export class TransactionRepository {
         return soldPerWeek
     }
 
-    public async topSellingPerWeek(businessId: string) {
-        const result = await prisma.$queryRaw<
-            {
-                week: Date
-                product_id: string
-                product_name: string
-                price: number
-                total_sold: number
-            }[]
-        >`
-    SELECT 
-      week,
-      product_id,
-      product_name,
-      price,
-      total_sold
-    FROM (
-      SELECT 
-        date_trunc('week', t.trx_date) AS week,
-        p.id AS product_id,
-        p.name AS product_name,
-        p.price,
-        SUM(ti.quantity)::int AS total_sold,
-        ROW_NUMBER() OVER (
-          PARTITION BY date_trunc('week', t.trx_date)
-          ORDER BY SUM(ti.quantity) DESC
-        ) AS rn
-      FROM transaction_items ti
-      JOIN transactions t ON t.id = ti.transaction_id
-      JOIN products p ON p.id = ti.product_id
-      WHERE 
-        t.trx_type = 'SALE'
-        AND t.deleted_at IS NULL
-        AND ti.deleted_at IS NULL
-        AND p.deleted_at IS NULL
-        AND t.business_id = ${businessId}
-      GROUP BY week, p.id, p.name, p.price
-    ) ranked
-    WHERE rn = 1
-    ORDER BY week ASC
-  `
-        return result
-    }
+//     public async topSellingPerWeek(businessId: string) {
+//         const result = await prisma.$queryRaw<
+//             {
+//                 week: Date
+//                 product_id: string
+//                 product_name: string
+//                 price: number
+//                 total_sold: number
+//             }[]
+//         >`
+//     SELECT 
+//       week,
+//       product_id,
+//       product_name,
+//       price,
+//       total_sold
+//     FROM (
+//       SELECT 
+//         date_trunc('week', t.trx_date) AS week,
+//         p.id AS product_id,
+//         p.name AS product_name,
+//         p.price,
+//         SUM(ti.quantity)::int AS total_sold,
+//         ROW_NUMBER() OVER (
+//           PARTITION BY date_trunc('week', t.trx_date)
+//           ORDER BY SUM(ti.quantity) DESC
+//         ) AS rn
+//       FROM transaction_items ti
+//       JOIN transactions t ON t.id = ti.transaction_id
+//       JOIN products p ON p.id = ti.product_id
+//       WHERE 
+//         t.trx_type = 'SALE'
+//         AND t.deleted_at IS NULL
+//         AND ti.deleted_at IS NULL
+//         AND p.deleted_at IS NULL
+//         AND t.business_id = ${businessId}
+//       GROUP BY week, p.id, p.name, p.price
+//     ) ranked
+//     WHERE rn = 1
+//     ORDER BY week ASC
+//   `
+//         return result
+//     }
 
 
 
 
-    public async topSellingByPeriod(
-        businessId: string,
-        period: 'week' | 'month' = 'week',
-        limit: number = 1
-    ) {
-        const trunc =
-            period === 'month'
-                ? Prisma.sql`'month'`
-                : Prisma.sql`'week'`
+//     public async topSellingByPeriod(
+//         businessId: string,
+//         period: 'week' | 'month' = 'week',
+//         limit: number = 1
+//     ) {
+//         const trunc =
+//             period === 'month'
+//                 ? Prisma.sql`'month'`
+//                 : Prisma.sql`'week'`
 
-        const result = await prisma.$queryRaw<
-            {
-                period: Date
-                product_id: string
-                product_name: string
-                price: number
-                total_sold: number
-                rank: number
-            }[]
-        >(Prisma.sql`
-    SELECT period, product_id, product_name, price, total_sold, rn AS rank
-    FROM (
-      SELECT 
-        date_trunc(${trunc}, t.trx_date) AS period,
-        p.id AS product_id,
-        p.name AS product_name,
-        p.price,
-        SUM(ti.quantity)::int AS total_sold,
-        ROW_NUMBER() OVER (
-          PARTITION BY date_trunc(${trunc}, t.trx_date)
-          ORDER BY SUM(ti.quantity) DESC
-        ) AS rn
-      FROM transaction_items ti
-      JOIN transactions t ON t.id = ti.transaction_id
-      JOIN products p ON p.id = ti.product_id
-      WHERE 
-        t.trx_type = 'SALE'
-        AND t.deleted_at IS NULL
-        AND ti.deleted_at IS NULL
-        AND p.deleted_at IS NULL
-        AND t.business_id = ${businessId}
-      GROUP BY 
-        date_trunc(${trunc}, t.trx_date),
-        p.id, p.name, p.price
-    ) ranked
-    WHERE rn <= ${limit}
-    ORDER BY period ASC, rn ASC
-  `)
+//         const result = await prisma.$queryRaw<
+//             {
+//                 period: Date
+//                 product_id: string
+//                 product_name: string
+//                 price: number
+//                 total_sold: number
+//                 rank: number
+//             }[]
+//         >(Prisma.sql`
+//     SELECT period, product_id, product_name, price, total_sold, rn AS rank
+//     FROM (
+//       SELECT 
+//         date_trunc(${trunc}, t.trx_date) AS period,
+//         p.id AS product_id,
+//         p.name AS product_name,
+//         p.price,
+//         SUM(ti.quantity)::int AS total_sold,
+//         ROW_NUMBER() OVER (
+//           PARTITION BY date_trunc(${trunc}, t.trx_date)
+//           ORDER BY SUM(ti.quantity) DESC
+//         ) AS rn
+//       FROM transaction_items ti
+//       JOIN transactions t ON t.id = ti.transaction_id
+//       JOIN products p ON p.id = ti.product_id
+//       WHERE 
+//         t.trx_type = 'SALE'
+//         AND t.deleted_at IS NULL
+//         AND ti.deleted_at IS NULL
+//         AND p.deleted_at IS NULL
+//         AND t.business_id = ${businessId}
+//       GROUP BY 
+//         date_trunc(${trunc}, t.trx_date),
+//         p.id, p.name, p.price
+//     ) ranked
+//     WHERE rn <= ${limit}
+//     ORDER BY period ASC, rn ASC
+//   `)
 
-        return result
-    }
+//         return result
+//     }
 
 
 

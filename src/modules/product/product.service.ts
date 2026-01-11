@@ -99,24 +99,24 @@ export class ProductService {
         return result
     }
 
-    public async topSellingProducts(businessId: string, limit: number) {
-        const topProductsData = await this.transactionRepository.topProductsSelling(businessId, limit)
-        const products = await this.productRepository.getProductsByBusiness(businessId)
-        const productMap = new Map(products.map(p => [p.id, p]))
+    // public async topSellingProducts(businessId: string, limit: number) {
+    //     const topProductsData = await this.transactionRepository.topProductsSelling(businessId, limit)
+    //     const products = await this.productRepository.getProductsByBusiness(businessId)
+    //     const productMap = new Map(products.map(p => [p.id, p]))
 
-        const result = topProductsData.map(tp => ({
-            ...productMap.get(tp.product_id),
-            total_sold: tp._sum.quantity ?? 0,
-        }))
+    //     const result = topProductsData.map(tp => ({
+    //         ...productMap.get(tp.product_id),
+    //         total_sold: tp._sum.quantity ?? 0,
+    //     }))
 
-        return result
-    }
+    //     return result
+    // }
 
-    public async topSellingProductsByPeriod(businessId: string, period: 'week' | 'month' , limit: number) {
-        const topProductsData = await this.transactionRepository.topSellingByPeriod(businessId, period, limit)
-        if (topProductsData.length === 0) throw new HTTPException(404, { message: "Data tidak ditemukan" })
-        return topProductsData
-    }
+    // public async topSellingProductsByPeriod(businessId: string, period: 'week' | 'month' , limit: number) {
+    //     const topProductsData = await this.transactionRepository.topSellingByPeriod(businessId, period, limit)
+    //     if (topProductsData.length === 0) throw new HTTPException(404, { message: "Data tidak ditemukan" })
+    //     return topProductsData
+    // }
 }
 
 
