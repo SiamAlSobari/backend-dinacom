@@ -55,31 +55,3 @@ export const productController = new Hono()
             return HttpResponse(c, "Berhasil mengahus product", 200, updateProduct, null)
         }
     )
-    .get(
-        '/sold-stats',
-        authMiddleware,
-        async (c) => {
-            const user = c.get('user')
-            const business = await businessService.getBusiness(user.id);
-                if (!business) {
-                return HttpResponse(c, "business not found", 404, null, null);
-            }
-            const stock = await productService.getProductStock(business.id)
-            return HttpResponse(c, "Berhasil mendapatkan product", 200, stock, null)
-        }
-    )
-    .get(
-        '/',
-        authMiddleware,
-        sValidator('query', getProductsValidation),
-        async (c) => {
-            const user = c.get('user')
-            const business = await businessService.getBusiness(user.id);
-                if (!business) {
-                return HttpResponse(c, "business not found", 404, null, null);
-            }
-            const { search } = c.req.valid('query')
-            const products = await productService.getProducts(business.id,search || '')
-            return HttpResponse(c, "Berhasil mendapatkan product analisis per minggu", 200, products, null)
-        }   
-    )

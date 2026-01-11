@@ -33,4 +33,32 @@ export const AnalyticsController = new Hono()
             }
             const data = await analyticService.getMonthlySales(business.id);
             return HttpResponse(c, "Monthly sales analytics data", 200, data, null);
-        });
+        }
+    )
+    .get(
+        "/top-products-this-week",
+        authMiddleware,
+        async (c) => {
+            const user = c.get("user");
+            const business = await businessRepository.get(user.id);
+            if (!business) {
+                return HttpResponse(c, "business not found", 404, null, null);
+            }
+            const data = await analyticService.getTopProductThisWeek(business.id);
+            return HttpResponse(c, "Top products analytics data", 200, data, null);
+        }
+    )
+    .get(
+        "/top-products-this-month",
+        authMiddleware,
+        async (c) => {
+            const user = c.get("user");
+            const business = await businessRepository.get(user.id);
+            if (!business) {
+                return HttpResponse(c, "business not found", 404, null, null);
+            }
+            const data = await analyticService.getTopProductThisMonth(business.id);
+            return HttpResponse(c, "Top products analytics data", 200, data, null);
+
+        }
+    );

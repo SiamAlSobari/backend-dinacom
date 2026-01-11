@@ -55,4 +55,75 @@ export class AnalyticRepository {
     return result
   }
 
+  public async topProductThisWeek(businessId: string, limit = 5) {
+    const result = await prisma.$queryRaw<
+      {
+        product_id: string
+        product_name: string
+        total_sold: number
+      }[]
+    >(Prisma.sql`
+      WITH current_week AS (
+        SELECT
+          date_trunc('month', now()) 
+            + (FLOOR((DATE(now()) - DATE(date_trunc('month', now()))) / 7) * interval '7 day')
+            AS start_week,
+          date_trunc('month', now()) 
+            + (FLOOR((DATE(now()) - DATE(date_trunc('month', now()))) / 7) * interval '7 day')
+            + interval '7 day'
+            AS end_week
+      )
+      SELECT
+        p.id AS product_id,
+        p.name AS product_name,
+        SUM(ti.quantity)::int AS total_sold
+      FROM transactions t
+      JOIN transaction_items ti ON ti.transaction_id = t.id
+      JOIN products p ON p.id = ti.product_id
+      CROSS JOIN current_week cw
+      WHERE
+        t.trx_type = 'SALE'
+        AND t.deleted_at IS NULL
+        AND ti.deleted_at IS NULL
+        AND p.business_id = ${businessId}
+        AND t.trx_date >= cw.start_week
+        AND t.trx_date < cw.end_week
+      GROUP BY p.id, p.name
+      ORDER BY total_sold DESC
+      LIMIT ${limit}
+    `)
+
+    return result
+  }
+
+  async topProductThisMonth(businessId: string, limit = 5) {
+    const result = await prisma.$queryRaw<
+      {
+        product_id: string
+        product_name: string
+        total_sold: number
+      }[]
+    >(Prisma.sql`
+      SELECT
+        p.id AS product_id,
+        p.name AS product_name,
+        COALESCE(SUM(ti.quantity), 0)::int AS total_sold
+      FROM transactions t
+      JOIN transaction_items ti ON ti.transaction_id = t.id
+      JOIN products p ON p.id = ti.product_id
+      WHERE
+        t.trx_type = 'SALE'
+        AND t.deleted_at IS NULL
+        AND ti.deleted_at IS NULL
+        AND p.business_id = ${businessId}
+        AND t.trx_date >= date_trunc('month', now())
+        AND t.trx_date < date_trunc('month', now()) + interval '1 month'
+      GROUP BY p.id, p.name
+      ORDER BY total_sold DESC
+      LIMIT ${limit}
+    `)
+
+    return result
+  }
+
 }
