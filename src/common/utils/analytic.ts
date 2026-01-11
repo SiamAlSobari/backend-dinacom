@@ -10,3 +10,17 @@ export function normalizeWeekData(data: any[]) {
     }
   })
 }
+
+
+export function normalizeMonthWeeks(data: any[]) {
+  const maxWeek = 5
+  return Array.from({ length: maxWeek }, (_, i) => {
+    const week = i + 1
+    const found = data.find(d => d.week === week)
+    return {
+      week,
+      label: `Week ${week}`,
+      total_sold: found ? found.total_sold : 0
+    }
+  })
+}

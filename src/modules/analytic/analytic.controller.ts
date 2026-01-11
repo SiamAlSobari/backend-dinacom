@@ -21,6 +21,11 @@ export const AnalyticsController = new Hono()
         return HttpResponse(c, "Weekly sales analytics data", 200, data, null)
     })
     .get('/sales-monthly', async (c) => {
-        // Logic to get monthly sales analytics
-        return c.json({ message: "Monthly sales analytics data" });
+        const user = c.get('user')
+        const business = await businessRepository.get(user.id)
+        if (!business) {
+            return HttpResponse(c, "business not found", 404, null, null);
+        }
+        const data =  await analyticService.getMonthlySales(business.id)
+        return HttpResponse(c, "Monthly sales analytics data", 200, data, null)
     })

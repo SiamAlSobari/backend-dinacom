@@ -1,4 +1,4 @@
-import { normalizeWeekData } from "../../common/utils/analytic.js";
+import { normalizeMonthWeeks, normalizeWeekData } from "../../common/utils/analytic.js";
 import type { AnalyticRepository } from "./analytic.repository.js";
 
 export class AnalyticService {
@@ -9,5 +9,10 @@ export class AnalyticService {
     public async getWeeklySales(businessId: string) {
         const data = await this.analyticRepository.soldPerDayThisWeek(businessId)
         return normalizeWeekData(data)
+    }
+
+    public async getMonthlySales(businessId: string) {
+        const data = await this.analyticRepository.soldPerWeekThisMonth(businessId)
+        return normalizeMonthWeeks(data)
     }
 }
