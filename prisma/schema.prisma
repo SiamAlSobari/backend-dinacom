@@ -103,9 +103,47 @@ model Businesses {
   products     Products[]
   ai_runs      AiRuns[]
   transactions Transactions[]
+  activities   Activity[]
+  notifications Notifications[]
 
   @@index([user_id])
   @@map("businesses")
+}
+
+enum ActivityType {
+  TRANSACTION_SALE
+  TRANSACTION_PURCHASE
+  STOCK_ADJUSTMENT
+  CREATE_PRODUCT
+  UPDATE_PRODUCT
+}
+
+model Activity {
+  id String @id @default(uuid())
+  business_id String
+  activity_text String @db.Text
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  deleted_at DateTime?
+  activity_type ActivityType?
+
+  business Businesses @relation(fields: [business_id], references: [id])
+
+  @@index([business_id, deleted_at])
+  @@map("activities")
+}
+
+model Notifications {
+  id String @id @default(uuid())
+  business_id String
+  notification_text String @db.Text
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  deleted_at DateTime?
+
+  business Businesses @relation(fields: [business_id], references: [id])
+  @@index([business_id, deleted_at])
+  @@map("notifications")
 }
 
 enum ProductUnit {

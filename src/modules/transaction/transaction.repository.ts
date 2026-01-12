@@ -32,7 +32,8 @@ export class TransactionRepository {
                         quantity: item.quantity,
                         unit_price: item.unit_price,
                         line_price: item.unit_price * item.quantity
-                    }
+                    },
+
                 })
 
                 let delta = 0
@@ -51,6 +52,26 @@ export class TransactionRepository {
                         }
                     }
                 })
+
+                const product = await tx.products.findUnique({
+                    where: {
+                        id: item.product_id
+                    },
+                    select: {
+                        name: true
+                    }
+                })
+
+                await tx.activity.create({
+                    data: {
+                        business_id: businessId,
+                        //activity_text: `Transaksi ${item.trx_type} berhasil dibuat untuk produk ${product?.name ?? "Produk tidak diketahui"} sebanyak ${item.quantity}.`,
+                        activity_text: `Penjualan ${product?.name ?? "produk"} sebanyak ${item.quantity} item berhasil dicatat. Total Rp${item.unit_price * item.quantity}.`,
+
+                        activity_type: 'TRANSACTION_SALE'
+                    }
+                })
+
             }
 
             await tx.aiRuns.create({

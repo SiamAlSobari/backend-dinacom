@@ -2,12 +2,13 @@ import { HTTPException } from "hono/http-exception";
 import { uploadImageToR2 } from "../../common/utils/upload-to-r2.js";
 import type { ProductRepository } from "./product.repository.js";
 import type { ProductUnitEnum } from "../../common/enums/product.js";
-import type { TransactionRepository } from "../transaction/transaction.repository.js";
+import type { ActivityRepository } from "../activity/activity.repository.js";
+import type { ActivityType } from "../../../generated/prisma/enums.js";
 
 export class ProductService {
     constructor(
         private readonly productRepository: ProductRepository,
-        private readonly transactionRepository: TransactionRepository
+        public readonly activityRepository: ActivityRepository
     ) { }
 
     public async createProduct(businessId: string, image: File, name: string, unit: ProductUnitEnum, stock: number, price: number) {
@@ -18,7 +19,11 @@ export class ProductService {
 
         // Buat product
         const product = await this.productRepository.create(businessId, imageUrl, name, unit, stock, price)
-
+        await this.activityRepository.createActivity(
+            businessId,
+            `Produk ${name} telah ditambahkan dengan stok awal ${stock}.`,
+            'PRODUCT_CREATED' as ActivityType
+        )
         return product
     }
 
