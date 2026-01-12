@@ -28,8 +28,8 @@ export const transactionController = new Hono()
             if (!business) {
                 return HttpResponse(c, "business not found", 404, null, null);
             }
-            const { items, business_id } = c.req.valid('json')
-            const transaction = await transactionService.createTransactionWithBulk(business_id, items)
+            const { items } = c.req.valid('json')
+            const transaction = await transactionService.createTransactionWithBulk(business.id, items)
             return HttpResponse(c, "Berhasil membuat transaksi", 201, transaction, null)
         }
     )
