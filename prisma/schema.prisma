@@ -25,8 +25,6 @@ model Users {
 
   subscriptions Subscriptions[]
   payments      Payments[]
-  activities   Activity[]
-  notifications Notifications[]
 
   @@unique([email, deleted_at])
   @@index([email, deleted_at])
@@ -112,36 +110,37 @@ model Businesses {
   @@map("businesses")
 }
 
+enum TrxTypeActivity {
+  SALE
+  PURCHASE
+  ADJUSTMENT
+}
+
 model Activity {
   id String @id @default(uuid())
-  user_id String
   business_id String
   activity_text String @db.Text
+  trx_type TrxTypeActivity?
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
   deleted_at DateTime?
 
-  user Users @relation(fields: [user_id], references: [id])
   business Businesses @relation(fields: [business_id], references: [id])
 
   @@index([business_id, deleted_at])
-  @@index([user_id, deleted_at])
   @@map("activities")
 }
 
 model Notifications {
   id String @id @default(uuid())
-  user_id String
   business_id String
   notification_text String @db.Text
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
   deleted_at DateTime?
 
-  user Users @relation(fields: [user_id], references: [id])
   business Businesses @relation(fields: [business_id], references: [id])
   @@index([business_id, deleted_at])
-  @@index([user_id, deleted_at])
   @@map("notifications")
 }
 

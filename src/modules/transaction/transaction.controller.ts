@@ -8,11 +8,13 @@ import type { TrxTypeEnum } from "../../common/enums/transaction.js";
 import { HttpResponse } from "../../common/utils/response.js";
 import { BusinessRepository } from "../business/business.repository.js";
 import { BusinessService } from "../business/business.service.js";
+import { ActivityRepository } from "../activity/activity.repository.js";
 
 
 // Instansi class
 const transactionRepository = new TransactionRepository();
-const transactionService = new TransactionService(transactionRepository);
+const activityRepository = new ActivityRepository();
+const transactionService = new TransactionService(transactionRepository, activityRepository);
 const businessRepository = new BusinessRepository()
 const businessService = new BusinessService(businessRepository)
 
