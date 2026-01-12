@@ -9,11 +9,12 @@ import type { ProductUnitEnum } from "../../common/enums/product.js";
 import { BusinessService } from "../business/business.service.js";
 import { BusinessRepository } from "../business/business.repository.js";
 import { TransactionRepository } from "../transaction/transaction.repository.js";
+import { ActivityRepository } from "../activity/activity.repository.js";
 
 
 const productRepository = new ProductRepository()
-const transactionRepository = new TransactionRepository()
-const productService = new ProductService(productRepository, transactionRepository)
+const activityRepository = new ActivityRepository()
+const productService = new ProductService(productRepository, activityRepository)
 const businessRepository = new BusinessRepository()
 const businessService = new BusinessService(businessRepository)
 

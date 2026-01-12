@@ -65,8 +65,10 @@ export class TransactionRepository {
                 await tx.activity.create({
                     data: {
                         business_id: businessId,
-                        activity_text: `Transaksi ${item.trx_type} berhasil dibuat untuk produk ${product?.name ?? "Produk tidak diketahui"} sebanyak ${item.quantity}.`,
-                        trx_type: item.trx_type
+                        //activity_text: `Transaksi ${item.trx_type} berhasil dibuat untuk produk ${product?.name ?? "Produk tidak diketahui"} sebanyak ${item.quantity}.`,
+                        activity_text: `Penjualan ${product?.name ?? "produk"} sebanyak ${item.quantity} item berhasil dicatat. Total Rp${item.unit_price * item.quantity}.`,
+
+                        activity_type: 'TRANSACTION_SALE'
                     }
                 })
 

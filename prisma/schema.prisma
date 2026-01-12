@@ -110,20 +110,22 @@ model Businesses {
   @@map("businesses")
 }
 
-enum TrxTypeActivity {
-  SALE
-  PURCHASE
-  ADJUSTMENT
+enum ActivityType {
+  TRANSACTION_SALE
+  TRANSACTION_PURCHASE
+  STOCK_ADJUSTMENT
+  CREATE_PRODUCT
+  UPDATE_PRODUCT
 }
 
 model Activity {
   id String @id @default(uuid())
   business_id String
   activity_text String @db.Text
-  trx_type TrxTypeActivity?
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
   deleted_at DateTime?
+  activity_type ActivityType?
 
   business Businesses @relation(fields: [business_id], references: [id])
 
