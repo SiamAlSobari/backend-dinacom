@@ -4,6 +4,7 @@ export const PRICE_MAP = {
   MONTHLY_1: 100_000,
   MONTHLY_2: 180_000,
   MONTHLY_3: 250_000,
+  YEARLY_1: 900_000,
 } as const;
 
 export const MIDTRANS_STATUS_MAP: Record<string, PaymentStatus> = {
