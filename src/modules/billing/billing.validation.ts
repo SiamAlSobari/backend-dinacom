@@ -5,6 +5,7 @@ export const SubscribeValidation = z.object({
     "MONTHLY_1",
     "MONTHLY_2",
     "MONTHLY_3",
+    "YEARLY_1",
   ]),
 });
 

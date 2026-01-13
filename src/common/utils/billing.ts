@@ -30,6 +30,7 @@ export function calcEndDate(duration: SubscriptionDuration) {
     MONTHLY_1: 1,
     MONTHLY_2: 2,
     MONTHLY_3: 3,
+    YEARLY_1: 12,
   };
 
   return addMonths(now, monthMap[duration] ?? 1);
