@@ -2,7 +2,7 @@
 
 - Shidiq  
 - Siam Al Sobari  
-- Naufal Qathafa / Rasya Hidayat  
+- Naufal Qathafa Rasya Hidayat  
 - Muhammad Shidiq Wicaksono  
 - Jingga Sujud Pribadi  
 
