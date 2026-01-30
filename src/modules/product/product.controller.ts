@@ -71,3 +71,16 @@ export const productController = new Hono()
             return HttpResponse(c, "Berhasil mendapatkan product analisis per minggu", 200, products, null)
         }
     )
+    .get(
+        '/summary',
+        authMiddleware,
+        async (c) => {
+            const user = c.get('user')
+            const business = await businessService.getBusiness(user.id);
+            if (!business) {
+                return HttpResponse(c, "business not found", 404, null, null);
+            }
+            const summary = await productService.getProductSummary(business.id)
+            return HttpResponse(c, "Berhasil mendapatkan product analisis per minggu", 200, summary, null)
+        }
+    )

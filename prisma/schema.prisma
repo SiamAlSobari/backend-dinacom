@@ -35,6 +35,7 @@ enum SubscriptionDuration {
   MONTHLY_1
   MONTHLY_2
   MONTHLY_3
+  YEARLY_1
 }
 
 enum SubscriptionStatus {
@@ -136,6 +137,8 @@ model Activity {
 model Notifications {
   id String @id @default(uuid())
   business_id String
+  is_active Boolean @default(true)
+  is_read Boolean @default(false)
   notification_text String @db.Text
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -169,6 +172,8 @@ model Products {
   business Businesses @relation(fields: [business_id], references: [id])
   stocks   Stocks[]
   ai_recommendations AiRecommendations[]
+  transaction_items TransactionItems[]
+
 
   @@index([business_id])
   @@map("products")
@@ -244,6 +249,7 @@ model TransactionItems {
   line_price   Int
 
   transaction Transactions @relation(fields: [transaction_id], references: [id])
+  product     Products     @relation(fields: [product_id], references: [id])
 
   @@index([product_id])
   @@index([transaction_id])

@@ -101,4 +101,33 @@ export class ProductRepository {
         });
     }
 
+    async findProductSummaryRaw(businessId: string, sevenDaysAgo: Date) {
+        return prisma.products.findMany({
+            where: {
+                business_id: businessId,
+                deleted_at: null,
+            },
+            include: {
+                stocks: {
+                    where: { deleted_at: null },
+                    select: { stock_on_hand: true },
+                },
+                transaction_items: {
+                    where: {
+                        deleted_at: null,
+                        transaction: {
+                            trx_type: "SALE",
+                            trx_date: {
+                                gte: sevenDaysAgo,
+                            },
+                        },
+                    },
+                    select: {
+                        quantity: true,
+                    },
+                },
+            },
+        })
+    }
+
 }

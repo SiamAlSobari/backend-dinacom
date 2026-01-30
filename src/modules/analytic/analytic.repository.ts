@@ -126,4 +126,65 @@ export class AnalyticRepository {
     return result
   }
 
+  public async findMonthlyRevenue(businessId: string, start: Date, end: Date) {
+    return prisma.transactions.findMany({
+      where: {
+        business_id: businessId,
+        trx_type: "SALE",
+        trx_date: {
+          gte: start,
+          lte: end,
+        },
+        deleted_at: null,
+      },
+      select: {
+        total_amount: true,
+        trx_date: true,
+      },
+      orderBy: {
+        trx_date: "asc",
+      },
+    })
+  }
+
+  public async findMonthlySalesWithStock(
+    businessId: string,
+    start: Date,
+    end: Date
+  ) {
+    return prisma.transactionItems.findMany({
+      where: {
+        deleted_at: null,
+        transaction: {
+          business_id: businessId,
+          trx_type: "SALE",
+          trx_date: {
+            gte: start,
+            lte: end,
+          },
+        },
+        product: {
+          deleted_at: null,
+        },
+      },
+      select: {
+        quantity: true,
+        created_at: true,
+        transaction: {
+          select: {
+            trx_date: true,
+          },
+        },
+        product: {
+          select: {
+            id: true,
+            stocks: {
+              where: { deleted_at: null },
+              select: { stock_on_hand: true },
+            },
+          },
+        },
+      },
+    })
+  }
 }

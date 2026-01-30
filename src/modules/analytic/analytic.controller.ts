@@ -61,4 +61,30 @@ export const AnalyticsController = new Hono()
             return HttpResponse(c, "Top products analytics data", 200, data, null);
 
         }
-    );
+    )
+    .get(
+        "/revenue-trends",
+        authMiddleware,
+        async (c) => {
+            const user = c.get("user");
+            const business = await businessRepository.get(user.id);
+            if (!business) {
+                return HttpResponse(c, "business not found", 404, null, null);
+            }
+            const data = await analyticService.getMonthlyWeeklyTrend(business.id);
+            return HttpResponse(c, "Monthly weekly revenue trend data", 200, data, null);
+        }
+    )
+    .get(
+        '/stable-unstable',
+        authMiddleware,
+        async (c) => {
+            const user = c.get("user");
+            const business = await businessRepository.get(user.id);
+            if (!business) {
+                return HttpResponse(c, "business not found", 404, null, null);
+            }
+            const data = await analyticService.getStableUnstableWeekly(business.id);
+            return HttpResponse(c, "Stable and Unstable products data", 200, data, null);
+        }
+    )

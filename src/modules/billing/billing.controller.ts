@@ -6,6 +6,7 @@ import { BillingRepository } from "./billing.repository.js";
 import { BillingService } from "./billing.service.js";
 import { HttpResponse } from "../../common/utils/response.js";
 import { BillingWebhookHandler } from "./billing.webhook.js";
+import type { SubscriptionDuration } from "../../../generated/prisma/enums.js";
 
 const billingRepository = new BillingRepository()
 const billingService = new BillingService(billingRepository)
@@ -18,7 +19,7 @@ export const billingController = new Hono()
         async (c) => {
             const { plan_duration } = c.req.valid('json')
             const user = c.get('user')
-            const subscribe = await billingService.subscribe(user.id, plan_duration)
+            const subscribe = await billingService.subscribe(user.id, plan_duration as SubscriptionDuration)
             return HttpResponse(c, "Berhasil subscribe", 201, subscribe, null)
         }
     )
@@ -34,9 +35,8 @@ export const billingController = new Hono()
     .post(
         '/webhook',
         authMiddleware,
-        sValidator('json', MidtransWebhookValidation),
         async (c) => {
-            const payload = await c.req.json();
+            const payload = await c.req.json()
             await billingWebhookHandler.handle(payload);
             return HttpResponse(c, "Berhasil mendapatkan subscription", 200, null, null)
         }

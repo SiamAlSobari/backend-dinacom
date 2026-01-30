@@ -35,5 +35,11 @@ export const authController = new Hono()
     )
     .get("/session", authMiddleware, async (c) => {
         const user = c.get("user");
-        return HttpResponse(c,"Session anda berhasil", 200, {user}, null)
-    });
+        return HttpResponse(c, "Session anda berhasil", 200, { user }, null)
+    })
+    .delete("/logout",
+        authMiddleware,
+        async (c) => {
+            setCookie(c, "token", "", { path: "/", maxAge: 0 });
+            return HttpResponse(c, "Logout berhasil", 200, null, null);
+        });
