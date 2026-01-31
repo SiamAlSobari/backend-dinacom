@@ -36,6 +36,7 @@ export const updateProductValidation = z.object({
     name: z.string().min(3),
     unit: z.enum(["PCS", "KG", "LITER", "BOX", "PACK"]),
     stock: z.coerce.number().optional(),
+    price: z.coerce.number().min(0).optional(),
 });
 
 export const updateProductParamValidation = z.object({
