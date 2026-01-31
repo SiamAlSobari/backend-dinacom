@@ -242,13 +242,14 @@ export class AiService {
         );
 
         try {
-            // Save portfolio insights
+            // Save portfolio insights - handle optional ai_summary
+            const aiSummary = response.portfolio_insights.ai_summary;
             await this.aiRepository.createAiInsights({
                 ai_run_id: aiRun.id,
-                pattern_trend_summary: response.portfolio_insights.ai_summary.pattern_trend_summary,
-                urgent: response.portfolio_insights.ai_summary.priority_actions.urgent,
-                medium: response.portfolio_insights.ai_summary.priority_actions.medium,
-                low: response.portfolio_insights.ai_summary.priority_actions.low,
+                pattern_trend_summary: aiSummary?.pattern_trend_summary ?? 'No summary available',
+                urgent: aiSummary?.priority_actions.urgent ?? 'No urgent actions',
+                medium: aiSummary?.priority_actions.medium ?? 'No medium priority actions',
+                low: aiSummary?.priority_actions.low ?? 'No low priority actions',
             });
 
             // Save per-product recommendations
@@ -282,7 +283,6 @@ export class AiService {
     }
 
     private async saveDetailedAiOutput(aiRunId: string, response: AIForecastResponse) {
-
         await this.aiRepository.createAiRunMeta({
             ai_run_id: aiRunId,
             model_version: response.model_version,
@@ -302,6 +302,11 @@ export class AiService {
         });
 
         for (const product of response.products) {
+            // Convert confidence to number if it's a string
+            const confidenceValue = typeof product.forecast.confidence === 'string' 
+                ? this.mapConfidenceToNumber(product.forecast.confidence)
+                : product.forecast.confidence;
+
             // Save forecast
             await this.aiRepository.createAiForecast({
                 ai_run_id: aiRunId,
@@ -311,7 +316,7 @@ export class AiService {
                 total_demand: product.forecast.total_demand,
                 average_per_day: product.forecast.average_per_day,
                 method: product.forecast.method,
-                confidence: product.forecast.confidence,
+                confidence: confidenceValue,
             });
 
             // Save product analysis
@@ -327,6 +332,15 @@ export class AiService {
                 sales_patterns: product.business_insights.sales_patterns,
             });
         }
+    }
+
+    private mapConfidenceToNumber(confidence: string): number {
+        const confidenceMap: Record<string, number> = {
+            'high': 95,
+            'medium': 80,
+            'low': 60,
+        };
+        return confidenceMap[confidence.toLowerCase()] ?? 70;
     }
 
     private mapRecommendationAction(action: string): 'RESTOCK' | 'WAIT' | 'REDUCE' {
