@@ -158,6 +158,11 @@ export class AiService {
             }),
         };
 
+        console.log(`ai input ${JSON.stringify(aiInput).length} bytes for ${aiInput.products.length} products over ${aiInput.window_days} days`);
+       console.log(`sample product input: ${JSON.stringify(aiInput.products[0])}`);
+       console.log(`product total sales 1: ${totalSales.get(aiInput.products[0].product_id)}`);
+       console.log(`product total sales 2 : ${totalSales.get(aiInput.products[1].product_id)}`);
+
         // Call AI forecast service
         const aiResponse = await this.callForecast(aiInput);
 
@@ -220,19 +225,16 @@ export class AiService {
                     quantity_min: product.recommendation.quantity_range.min,
                     quantity_max: product.recommendation.quantity_range.max,
                     risk_level: this.mapRiskLevel(product.stock_analysis.risk_level),
-                    days_until_stockout: product.stock_analysis.days_until_stockout,
-                    reason_text: product.ai_insights.reasoning,
+                    days_until_stockout: product.stock_analysis.days_until_stockout !== null 
+                        ? product.stock_analysis.days_until_stockout 
+                        : 0,
+                    reason_text: product.recommendation.reason,
                 });
             }
 
             return aiRun;
         } catch (error) {
-            // Update status to FAILED if something goes wrong
-            await this.aiRepository.updateAiRunStatus(
-                aiRun.id,
-                'FAILED',
-                error instanceof Error ? error.message : 'Unknown error'
-            );
+            await this.aiRepository.updateAiRunStatus(aiRun.id, 'FAILED', error instanceof Error ? error.message : 'Unknown error');
             throw error;
         }
     }

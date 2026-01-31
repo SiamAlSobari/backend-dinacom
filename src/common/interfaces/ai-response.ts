@@ -54,7 +54,7 @@ export interface AIForecastResponse {
       confidence: number
     }
     stock_analysis: {
-      days_until_stockout: number
+      days_until_stockout: number | null
       risk_level: string
       urgency_score: number
       forecast_reliability: string
@@ -81,11 +81,6 @@ export interface AIForecastResponse {
     business_priority: {
       priority_score: number
       priority_tier: string
-    }
-    ai_insights: {
-      reasoning: string
-      model: string
-      generated_at: string
     }
   }>
 }
