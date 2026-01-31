@@ -23,7 +23,7 @@ export class ProductService {
         await this.activityRepository.createActivity(
             businessId,
             `Produk ${name} telah ditambahkan dengan stok awal ${stock}.`,
-            'PRODUCT_CREATED' as ActivityType
+            'CREATE_PRODUCT' as ActivityType
         )
         return product
     }
@@ -61,6 +61,12 @@ export class ProductService {
         if (!products) throw new HTTPException(404, { message: "Product tidak ditemukan" })
 
         return products
+    }
+
+    public async getAllProductsByBusiness(businessId: string, page: number, limit: number) {
+        // Ambil product
+        const {maxPage, products} = await this.productRepository.getAllProductsPaginated(businessId, page, limit)
+        return {maxPage, products}
     }
 
     async getProductSummary(businessId: string): Promise<ProductSummary[]> {

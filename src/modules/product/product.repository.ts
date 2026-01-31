@@ -20,6 +20,41 @@ export class ProductRepository {
         });
     }
 
+    public async getAllProductsPaginated(businessId: string, page: number, limit: number) {
+        const offset = (page - 1) * limit;
+        const maxPage = Math.ceil(await prisma.products.count({
+            where: {
+                business_id: businessId,
+                deleted_at: null,
+                stocks: {
+                    some: {
+                        deleted_at: null
+                    }
+                }
+            }
+        }) / limit);
+        const products = await prisma.products.findMany({
+            where: {
+                business_id: businessId,
+                deleted_at: null,
+                stocks: {
+                    some: {
+                        deleted_at: null
+                    }
+                }
+            },
+            include: {
+                stocks: {
+                    where: {
+                        deleted_at: null
+                    }
+                }
+            },
+            take: limit,
+            skip: offset
+        });
+        return { products, maxPage }
+    }
     public async update(productId: string, imageUrl: string, name: string, unit: ProductUnitEnum) {
         return await prisma.products.update({
             where: {
