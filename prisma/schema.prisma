@@ -169,11 +169,12 @@ model Products {
   updated_at  DateTime    @updatedAt
   deleted_at  DateTime?
 
-  business Businesses @relation(fields: [business_id], references: [id])
-  stocks   Stocks[]
+  business           Businesses          @relation(fields: [business_id], references: [id])
+  stocks             Stocks[]
   ai_recommendations AiRecommendations[]
-  transaction_items TransactionItems[]
-
+  transaction_items  TransactionItems[]
+  forecasts          AiForecasts[]
+  product_analysis   AiProductAnalysis[]
 
   @@index([business_id])
   @@map("products")
@@ -273,9 +274,13 @@ model AiRuns {
   updated_at    DateTime    @updatedAt
   deleted_at    DateTime?
 
-  business           Businesses          @relation(fields: [business_id], references: [id], onDelete: Cascade)
-  insights           AiInsights[]
-  ai_recommendations AiRecommendations[]
+  business              Businesses            @relation(fields: [business_id], references: [id], onDelete: Cascade)
+  insights              AiInsights[]
+  ai_recommendations    AiRecommendations[]
+  meta                  AiRunMeta?
+  portfolio_insights    AiPortfolioInsights?
+  forecasts             AiForecasts[]
+  product_analysis      AiProductAnalysis[]
 
   @@index([business_id])
   @@map("ai_runs")
@@ -355,4 +360,89 @@ model AiRecommendationsActions {
 
   @@index([ai_recommendation_id])
   @@map("ai_recommendations_actions")
+}
+
+// NEW: Store AI run metadata
+model AiRunMeta {
+  id                  String    @id @default(uuid())
+  ai_run_id           String    @unique
+  model_version       String
+  total_products      Int
+  llm_enabled         Boolean
+  llm_success_count   Int
+  fallback_count      Int
+  total_tokens_used   Int
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @updatedAt
+  deleted_at          DateTime?
+
+  ai_run AiRuns @relation(fields: [ai_run_id], references: [id], onDelete: Cascade)
+
+  @@index([ai_run_id])
+  @@map("ai_run_meta")
+}
+
+// NEW: Store portfolio-level insights
+model AiPortfolioInsights {
+  id                String    @id @default(uuid())
+  ai_run_id         String    @unique
+  summary           Json      // {total_products, high_risk_count, medium_risk_count, restock_needed_count, estimated_total_restock_qty}
+  trends            Json      // {growing_products, declining_products, high_volatility_products}
+  priority_actions  Json      // Array of {product_name, risk_level, days_left, priority_score, recommended_qty}
+  risk_distribution Json      // {HIGH, MEDIUM, LOW}
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+  deleted_at        DateTime?
+
+  ai_run AiRuns @relation(fields: [ai_run_id], references: [id], onDelete: Cascade)
+
+  @@index([ai_run_id])
+  @@map("ai_portfolio_insights")
+}
+
+// NEW: Store daily forecast per product
+model AiForecasts {
+  id              String    @id @default(uuid())
+  ai_run_id       String
+  product_id      String
+  horizon_days    Int
+  daily_forecast  Json      // Array of numbers: [2, 3, 2, 4, ...]
+  total_demand    Int
+  average_per_day Float
+  method          String
+  confidence      Int
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+  deleted_at      DateTime?
+
+  ai_run  AiRuns   @relation(fields: [ai_run_id], references: [id], onDelete: Cascade)
+  product Products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@index([ai_run_id])
+  @@index([product_id])
+  @@map("ai_forecasts")
+}
+
+// NEW: Store per-product analysis
+model AiProductAnalysis {
+  id                     String    @id @default(uuid())
+  ai_run_id              String
+  product_id             String
+  days_until_stockout    Int?
+  risk_level             AiRecommendationsRiskLevel
+  urgency_score          Int
+  forecast_reliability   String
+  priority_score         Int
+  priority_tier          String
+  sales_patterns         Json      // {trend, volatility, weekend_effect, growth_rate, seasonality, avg_daily_sales, coefficient_of_variation}
+  created_at             DateTime  @default(now())
+  updated_at             DateTime  @updatedAt
+  deleted_at             DateTime?
+
+  ai_run  AiRuns   @relation(fields: [ai_run_id], references: [id], onDelete: Cascade)
+  product Products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@index([ai_run_id])
+  @@index([product_id])
+  @@map("ai_product_analysis")
 }
