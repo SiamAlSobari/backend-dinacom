@@ -31,7 +31,7 @@ export interface AIForecastResponse {
       MEDIUM: number
       LOW: number
     }
-    ai_summary: {
+    ai_summary?: {
       pattern_trend_summary: string
       priority_actions: {
         urgent: string
@@ -51,7 +51,7 @@ export interface AIForecastResponse {
       total_demand: number
       average_per_day: number
       method: string
-      confidence: number
+      confidence: number | string  // Can be number (95) or string ("high")
     }
     stock_analysis: {
       days_until_stockout: number | null
