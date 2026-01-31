@@ -19,6 +19,7 @@ export class BillingWebhookHandler {
             payment_type,
             transaction_time,
         } = payload;
+        console.log("Received Midtrans webhook:", payload);
 
         // const valid = verifyMidtransSignature(
         //   order_id,

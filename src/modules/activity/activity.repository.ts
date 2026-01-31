@@ -17,7 +17,8 @@ export class ActivityRepository {
             where: {
                 business_id: businessId
             },
-            take: limit
+            take: limit,
+            orderBy: { created_at: "desc" },
         });
     }
 }

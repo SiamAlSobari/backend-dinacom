@@ -8,6 +8,7 @@ export class BillingService {
     constructor(private readonly billingRepository: BillingRepository) { }
 
     async getSubscription(userId: string) {
+        await this.billingRepository.expireSubscriptions(userId);
         return this.billingRepository.getActiveSubscription(userId);
     }
 

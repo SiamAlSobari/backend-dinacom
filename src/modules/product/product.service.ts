@@ -4,6 +4,7 @@ import type { ProductRepository } from "./product.repository.js";
 import type { ProductUnitEnum } from "../../common/enums/product.js";
 import type { ActivityRepository } from "../activity/activity.repository.js";
 import type { ActivityType } from "../../../generated/prisma/enums.js";
+import type { ProductSummary } from "../../common/interfaces/product.js";
 
 export class ProductService {
     constructor(
@@ -22,7 +23,7 @@ export class ProductService {
         await this.activityRepository.createActivity(
             businessId,
             `Produk ${name} telah ditambahkan dengan stok awal ${stock}.`,
-            'PRODUCT_CREATED' as ActivityType
+            'CREATE_PRODUCT' as ActivityType
         )
         return product
     }
@@ -60,5 +61,43 @@ export class ProductService {
         if (!products) throw new HTTPException(404, { message: "Product tidak ditemukan" })
 
         return products
+    }
+
+    public async getAllProductsByBusiness(businessId: string, page: number, limit: number) {
+        // Ambil product
+        const {maxPage, products} = await this.productRepository.getAllProductsPaginated(businessId, page, limit)
+        return {maxPage, products}
+    }
+
+    async getProductSummary(businessId: string): Promise<ProductSummary[]> {
+        const sevenDaysAgo = new Date()
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+
+        const products = await this.productRepository.findProductSummaryRaw(
+            businessId,
+            sevenDaysAgo
+        )
+
+        return products.map((p) => {
+            const currentStock =
+                p.stocks.reduce((a, b) => a + b.stock_on_hand, 0) || 0
+
+            const sold7d =
+                p.transaction_items.reduce((a, b) => a + b.quantity, 0) || 0
+
+            let status: ProductSummary["status"] = "SAFE"
+
+            if (currentStock === 0) status = "OUT"
+            else if (currentStock < 10 && sold7d > 20) status = "CRITICAL"
+            else if (currentStock < 10) status = "LOW"
+
+            return {
+                productId: p.id,
+                product: p.name,
+                currentStock,
+                sold7d,
+                status,
+            }
+        })
     }
 }

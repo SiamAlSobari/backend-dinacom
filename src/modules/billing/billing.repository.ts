@@ -54,5 +54,19 @@ export class BillingRepository {
         });
     }
 
+    public async expireSubscriptions(userId: string) {
+        const result = await prisma.subscriptions.updateMany({
+            where: {
+                status: 'ACTIVE',
+                end_date: { lt: new Date() },
+                user_id: userId
+            },
+            data: { status: 'EXPIRED' },
+        });
+
+        if (result.count > 0) {
+            console.log(`Auto-expired ${result.count} subscription(s)`);
+        }
+    }
 
 }
