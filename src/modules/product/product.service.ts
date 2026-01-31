@@ -5,11 +5,13 @@ import type { ProductUnitEnum } from "../../common/enums/product.js";
 import type { ActivityRepository } from "../activity/activity.repository.js";
 import type { ActivityType } from "../../../generated/prisma/enums.js";
 import type { ProductSummary } from "../../common/interfaces/product.js";
+import type { StockRepository } from "../stock/stock.repository.js";
 
 export class ProductService {
     constructor(
         private readonly productRepository: ProductRepository,
-        public readonly activityRepository: ActivityRepository
+        public readonly activityRepository: ActivityRepository,
+        public readonly stockRepository: StockRepository,
     ) { }
 
     public async createProduct(businessId: string, image: File, name: string, unit: ProductUnitEnum, stock: number, price: number) {
@@ -28,7 +30,7 @@ export class ProductService {
         return product
     }
 
-    public async updateProduct(productId: string, image: File | null, name: string, unit: ProductUnitEnum) {
+    public async updateProduct(productId: string, image: File | null, name: string, unit: ProductUnitEnum, stock?: number) {
         // Ambil product
         const product = await this.productRepository.getProduct(productId)
         if (!product) throw new HTTPException(404, { message: "Product tidak ditemukan" })
@@ -43,7 +45,10 @@ export class ProductService {
         }
 
         // Update product
-        const updatedProduct = await this.productRepository.update(productId, imageUrl, name, unit)
+        const updatedProduct = await this.productRepository.update(productId, imageUrl, name, unit, stock)
+        if (stock !== undefined) {
+            await this.stockRepository.updateStock(productId, stock);
+        }
         return updatedProduct
     }
 

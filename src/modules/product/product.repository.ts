@@ -55,7 +55,7 @@ export class ProductRepository {
         });
         return { products, maxPage }
     }
-    public async update(productId: string, imageUrl: string, name: string, unit: ProductUnitEnum) {
+    public async update(productId: string, imageUrl: string, name: string, unit: ProductUnitEnum, stock?: number) {
         return await prisma.products.update({
             where: {
                 id: productId,
@@ -64,7 +64,8 @@ export class ProductRepository {
             data: {
                 name,
                 unit,
-                image_url: imageUrl
+                image_url: imageUrl,
+                
             }
         });
     }
