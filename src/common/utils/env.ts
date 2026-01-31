@@ -10,3 +10,4 @@ export const ACCESS_KEY_SECRET = process.env.ACCESS_KEY_SECRET
 export const OBJECT_STORAGE_URL = process.env.OBJECT_STORAGE_URL
 export const MIDTRANS_CLIENT_KEY = process.env.MIDTRANS_CLIENT_KEY
 export const MIDTRANS_SERVER_KEY = process.env.MIDTRANS_SERVER_KEY
+export const CORS_ORIGIN = process.env.CORS_ORIGIN || "*";

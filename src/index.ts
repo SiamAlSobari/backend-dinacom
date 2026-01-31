@@ -5,7 +5,6 @@ import { HTTPException } from 'hono/http-exception'
 import { logger } from 'hono/logger'
 import { authController } from './modules/auth/auth.controller.js'
 import { businessController } from './modules/business/business.controller.js'
-import { xid } from 'zod'
 import { productController } from './modules/product/product.controller.js'
 import { transactionController } from './modules/transaction/transaction.controller.js'
 import { stockController } from './modules/stock/stock.controller.js'
@@ -25,15 +24,26 @@ app.get('/health', (c) => {
   return c.text('Hello Hono!')
 })
 
+const allowedOrigins = process.env.CORS_ORIGIN?.split(",") ?? []
+
 // Middleware cors 
 app.use(
-    "*",
-    cors({
-        origin: (origin) => origin ?? "*",
-        allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-        credentials: true,
-    })
-);
+  "*",
+  cors({
+    origin: (origin) => {
+      // request non-browser (Postman, server-to-server)
+      if (!origin) return origin
+
+      if (allowedOrigins.includes(origin)) {
+        return origin // penting: BALIKIN origin yg sama
+      }
+
+      return undefined // origin tidak diizinkan
+    },
+    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    credentials: true,
+  })
+)
 
 // Error handle middleware
 app.onError((err, c) => {
