@@ -4,7 +4,7 @@ import { sValidator } from "@hono/standard-validator";
 import { HttpResponse } from "../../common/utils/response.js";
 import { ProductRepository } from "./product.repository.js";
 import { ProductService } from "./product.service.js";
-import { createProductValidation, deleteProductValidation, getProductsValidation, updateProductParamValidation, updateProductValidation } from "./product.validatiton.js";
+import { createProductValidation, deleteProductValidation, getProductsValidation, updateProductParamValidation, updateProductValidation } from "./product.validation.js";
 import type { ProductUnitEnum } from "../../common/enums/product.js";
 import { BusinessService } from "../business/business.service.js";
 import { BusinessRepository } from "../business/business.repository.js";
