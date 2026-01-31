@@ -99,7 +99,17 @@ export class AiRepository {
         reason_text: string;
     }) {
         return await prisma.aiRecommendations.create({
-            data,
+            data: {
+                ai_run_id: data.ai_run_id,
+                product_id: data.product_id,
+                current_stock: data.current_stock,
+                recommended_action: data.recommended_action,
+                quantity_min: data.quantity_min,
+                quantity_max: data.quantity_max,
+                risk_level: data.risk_level,
+                days_until_stockout: data.days_until_stockout,
+                reason_text: data.reason_text,
+            },
         });
     }
 
