@@ -91,4 +91,16 @@ export class StockRepository {
             }
         })
     }
+
+    public async updateStock(productId: string, stockOnHand: number) {
+        return prisma.stocks.updateMany({
+            where: {
+                product_id: productId,
+                deleted_at: null,
+            },
+            data: {
+                stock_on_hand: stockOnHand,
+            },
+        })
+    }
 }

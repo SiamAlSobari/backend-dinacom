@@ -7,7 +7,7 @@ export const TransactionItemValidation = z.object({
   unit_price: z.number().int().nonnegative(),
   trx_type: z.enum(["SALE", "PURCHASE", "ADJUSTMENT"]),
   trx_date: z.coerce.date(),
-  trx_method: z.enum(["CASH", "CREDIT", "DEBIT"]).optional(),
+  trx_method: z.enum(["CASH", "CREDIT", "DEBIT","QRIS"]).optional(),
 })
 
 

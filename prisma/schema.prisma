@@ -208,6 +208,7 @@ enum TrxPaymentMethod {
   CASH
   CREDIT
   DEBIT
+  QRIS
 }
 
 model Transactions {

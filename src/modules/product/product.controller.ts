@@ -4,16 +4,18 @@ import { sValidator } from "@hono/standard-validator";
 import { HttpResponse } from "../../common/utils/response.js";
 import { ProductRepository } from "./product.repository.js";
 import { ProductService } from "./product.service.js";
-import { createProductValidation, deleteProductValidation, getProductPerBusinessValidation, getProductsValidation, updateProductParamValidation, updateProductValidation } from "./product.validatiton.js";
+import { createProductValidation, deleteProductValidation, getProductsValidation, updateProductParamValidation, updateProductValidation } from "./product.validatiton.js";
 import type { ProductUnitEnum } from "../../common/enums/product.js";
 import { BusinessService } from "../business/business.service.js";
 import { BusinessRepository } from "../business/business.repository.js";
 import { ActivityRepository } from "../activity/activity.repository.js";
+import { StockRepository } from "../stock/stock.repository.js";
 
 
 const productRepository = new ProductRepository()
 const activityRepository = new ActivityRepository()
-const productService = new ProductService(productRepository, activityRepository)
+const stockRepository = new StockRepository()
+const productService = new ProductService(productRepository, activityRepository, stockRepository)
 const businessRepository = new BusinessRepository()
 const businessService = new BusinessService(businessRepository)
 
@@ -50,8 +52,8 @@ export const productController = new Hono()
         sValidator('form', updateProductValidation),
         async (c) => {
             const { productId } = c.req.valid('param')
-            const { image, name, unit } = c.req.valid('form')
-            const updateProduct = await productService.updateProduct(productId, image || null, name, unit as ProductUnitEnum)
+            const { image, name, unit, stock } = c.req.valid('form')
+            const updateProduct = await productService.updateProduct(productId, image || null, name, unit as ProductUnitEnum, stock)
             return HttpResponse(c, "Berhasil mengahus product", 200, updateProduct, null)
         }
     )
