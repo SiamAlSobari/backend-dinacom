@@ -1,7 +1,5 @@
 import type { TransactionRow } from "../../common/interfaces/transaction_row.js";
-import type { AIForecastResponse } from "../../common/interfaces/ai-response.js";
 import { prisma } from "../../common/utils/db.js";
-
 
 export class AiRepository {
     public async getAllProducts(businessId: string) {
@@ -15,7 +13,7 @@ export class AiRepository {
                 id: true,
                 name: true,
                 unit: true,
-                image_url: true, 
+                image_url: true,
             },
             orderBy: { created_at: "asc" },
         });
@@ -35,11 +33,16 @@ export class AiRepository {
                 product_id: true,
                 stock_on_hand: true,
             },
+            orderBy: {
+                updated_at: 'desc',
+            },
         });
 
         const map = new Map<string, number>();
         for (const r of rows) {
-            map.set(r.product_id, r.stock_on_hand);
+            if (!map.has(r.product_id)) {
+                map.set(r.product_id, r.stock_on_hand);
+            }
         }
         return map;
     }
@@ -58,8 +61,18 @@ export class AiRepository {
             select: {
                 product_id: true,
                 quantity: true,
-                transaction: { select: { trx_date: true, trx_type: true } },
+                transaction: {
+                    select: {
+                        trx_date: true,
+                        trx_type: true
+                    }
+                },
             },
+            orderBy: {
+                transaction: {
+                    trx_date: 'asc'
+                }
+            }
         });
         return rows;
     }
@@ -152,5 +165,54 @@ export class AiRepository {
                 error_message: errorMessage,
             },
         });
+    }
+
+    public async createAiRunMeta(data: {
+        ai_run_id: string;
+        model_version: string;
+        total_products: number;
+        llm_enabled: boolean;
+        llm_success_count: number;
+        fallback_count: number;
+        total_tokens_used: number;
+    }) {
+        return await prisma.aiRunMeta.create({ data });
+    }
+
+    public async createAiPortfolioInsights(data: {
+        ai_run_id: string;
+        summary: any;
+        trends: any;
+        priority_actions: any;
+        risk_distribution: any;
+    }) {
+        return await prisma.aiPortfolioInsights.create({ data });
+    }
+
+    public async createAiForecast(data: {
+        ai_run_id: string;
+        product_id: string;
+        horizon_days: number;
+        daily_forecast: number[];
+        total_demand: number;
+        average_per_day: number;
+        method: string;
+        confidence: number;
+    }) {
+        return await prisma.aiForecasts.create({ data });
+    }
+
+    public async createAiProductAnalysis(data: {
+        ai_run_id: string;
+        product_id: string;
+        days_until_stockout: number | null;
+        risk_level: 'HIGH' | 'MEDIUM' | 'LOW';
+        urgency_score: number;
+        forecast_reliability: string;
+        priority_score: number;
+        priority_tier: string;
+        sales_patterns: any;
+    }) {
+        return await prisma.aiProductAnalysis.create({ data });
     }
 }

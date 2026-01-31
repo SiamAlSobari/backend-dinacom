@@ -34,12 +34,27 @@ function buildDateKeys(from: Date, to: Date): YMDDateString[] {
     return keys;
 }
 
+// NEW: Unit mapping helper
+function mapUnitToAI(dbUnit: string): string {
+    const unitMap: Record<string, string> = {
+        'PCS': 'PCS',
+        'BOX': 'BOX',
+        'KG': 'KG',
+        'LITER': 'LITER',
+        'PACK': 'PACK',
+        'BOTOL': 'BOTOL', // Support for BOTOL even if not in enum
+    };
+    return unitMap[dbUnit] || dbUnit;
+}
+
 export class AiService {
     constructor(private readonly aiRepository: AiRepository) {}
 
     public async analyzeAI(businessId: string, fromDate: Date, toDate: Date) {
         const from = normalizeFrom(fromDate);
         const to = normalizeTo(toDate);
+
+        console.log(`[analyzeAI] Range: ${from.toISOString()} to ${to.toISOString()}`);
 
         // Build AI input
         const [products, stockMap, trxRows] = await Promise.all([
@@ -48,10 +63,15 @@ export class AiService {
             this.aiRepository.getAllTrxRows(businessId, from, to),
         ]);
 
+        console.log(`[analyzeAI] Found ${products.length} products, ${trxRows.length} transaction items`);
+
         const productIds = products.map((p) => p.id);
         const dateKeys = buildDateKeys(from, to);
         const windowDays = dateKeys.length;
 
+        console.log(`[analyzeAI] Date keys (${dateKeys.length}): ${dateKeys[0]} to ${dateKeys[dateKeys.length - 1]}`);
+
+        // Initialize maps for each product
         const salesDayMap = new Map<string, Map<YMDDateString, number>>();
         const purchaseDayMap = new Map<string, Map<YMDDateString, number>>();
         const adjDayMap = new Map<string, Map<YMDDateString, number>>();
@@ -70,13 +90,22 @@ export class AiService {
             totalAdjustments.set(pid, 0);
         }
 
+        // Process transactions - FIX: Proper date conversion
         for (const r of trxRows as TransactionRow[]) {
             const pid = r.product_id;
-            if (!salesDayMap.has(pid)) continue;
+            if (!salesDayMap.has(pid)) {
+                console.warn(`[analyzeAI] Transaction item for unknown product: ${pid}`);
+                continue;
+            }
 
             const day = toYMD_WIB(r.transaction.trx_date);
             const qty = r.quantity;
             const type = r.transaction.trx_type;
+
+            // DEBUG logging for first few items
+            if (trxRows.indexOf(r) < 3) {
+                console.log(`[analyzeAI] Processing: product=${pid}, date=${day}, qty=${qty}, type=${type}`);
+            }
 
             if (type === "SALE") {
                 const m = salesDayMap.get(pid)!;
@@ -88,15 +117,16 @@ export class AiService {
                 totalPurchases.set(pid, (totalPurchases.get(pid) ?? 0) + qty);
             } else if (type === "ADJUSTMENT") {
                 const m = adjDayMap.get(pid)!;
-                m.set(day, (m.get(day) ?? 0) + qty); 
+                m.set(day, (m.get(day) ?? 0) + qty);
                 totalAdjustments.set(pid, (totalAdjustments.get(pid) ?? 0) + qty);
             }
         }
 
+        // Build AI input
         const aiInput: AIForecastInput = {
             business_id: businessId,
             window_days: windowDays,
-            as_of_date: toYMD_WIB(to), 
+            as_of_date: toYMD_WIB(to),
             products: products.map<AIProductInput>((p) => {
                 const current = stockMap.get(p.id) ?? 0;
 
@@ -104,44 +134,53 @@ export class AiService {
                 const purchases = totalPurchases.get(p.id) ?? 0;
                 const adjustments = totalAdjustments.get(p.id) ?? 0;
 
-                const startStock = current - purchases - adjustments + sales;
+                // Calculate start stock (ESTIMASI karena tidak ada snapshot harian)
+                // Rumus: current_stock + sales - purchases - adjustments
+                // Asumsi: current stock adalah hasil akhir setelah semua transaksi dalam window
+                const startStock = Math.max(0, current + sales - purchases - adjustments);
 
                 const sMap = salesDayMap.get(p.id) ?? new Map<YMDDateString, number>();
                 const pMap = purchaseDayMap.get(p.id) ?? new Map<YMDDateString, number>();
                 const aMap = adjDayMap.get(p.id) ?? new Map<YMDDateString, number>();
 
+                // FIX: Fill ALL dates in window with 0 if missing
                 const daily_sales: DailySalesRow[] = dateKeys.map((d) => ({
                     date: d,
                     qty: sMap.get(d) ?? 0,
                 }));
 
                 const restocks: RestockEvent[] = dateKeys
-                    .filter((d) => (pMap.get(d) ?? 0) !== 0)
+                    .filter((d) => (pMap.get(d) ?? 0) > 0)
                     .map((d) => ({
                         date: d,
-                        qty: pMap.get(d) ?? 0,
+                        qty: pMap.get(d)!,
                         note: 'Restock',
                     }));
 
                 const adjustmentsArr: AdjustmentEvent[] = dateKeys
-                    .filter((d) => (aMap.get(d) ?? 0) !== 0)
+                    .filter((d) => {
+                        const qty = aMap.get(d) ?? 0;
+                        return qty !== 0;
+                    })
                     .map((d) => ({
                         date: d,
-                        qty: aMap.get(d) ?? 0,
+                        qty: aMap.get(d)!,
                         reason: 'Adjustment',
                     }));
 
                 const window_start_date = dateKeys[0];
                 const window_end_date = dateKeys[dateKeys.length - 1];
-                
+
                 if (!window_start_date || !window_end_date) {
                     throw new Error('dateKeys is empty; cannot build stock window');
                 }
 
+                console.log(`[analyzeAI] Product ${p.name}: sales=${sales}, purchases=${purchases}, adj=${adjustments}, current=${current}, start=${startStock}`);
+
                 return {
                     product_id: p.id,
                     product_name: p.name,
-                    unit: p.unit,
+                    unit: mapUnitToAI(p.unit),
                     image_url: p.image_url ?? null,
                     stock: {
                         window_start_date,
@@ -158,10 +197,8 @@ export class AiService {
             }),
         };
 
-        console.log(`ai input ${JSON.stringify(aiInput).length} bytes for ${aiInput.products.length} products over ${aiInput.window_days} days`);
-       console.log(`sample product input: ${JSON.stringify(aiInput.products[0])}`);
-       console.log(`product total sales 1: ${totalSales.get(aiInput.products[0].product_id)}`);
-       console.log(`product total sales 2 : ${totalSales.get(aiInput.products[1].product_id)}`);
+        console.log(`[analyzeAI] AI input generated: ${aiInput.products.length} products`);
+        console.log(`[analyzeAI] Sample daily_sales for product 0: ${JSON.stringify(aiInput.products[0]?.daily_sales?.slice(0, 5))}`);
 
         // Call AI forecast service
         const aiResponse = await this.callForecast(aiInput);
@@ -176,37 +213,36 @@ export class AiService {
     }
 
     public async callForecast(payload: AIForecastInput): Promise<AIForecastResponse> {
-        const aiServiceUrl = process.env.FAST_API_URL
-        const controller = new AbortController()
-        const timeout = setTimeout(() => controller.abort(), 100_000) 
+        const aiServiceUrl = process.env.FAST_API_URL;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 100_000);
         try {
             const res = await fetch(`${aiServiceUrl}/forecast`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
                 signal: controller.signal,
-            })
+            });
 
             if (!res.ok) {
-                const text = await res.text().catch(() => '')
-                throw new Error(`FastAPI error ${res.status}: ${text}`)
+                const text = await res.text().catch(() => '');
+                throw new Error(`FastAPI error ${res.status}: ${text}`);
             }
 
             return await res.json();
         } finally {
-            clearTimeout(timeout)
+            clearTimeout(timeout);
         }
     }
 
     private async saveAiRunResults(businessId: string, response: AIForecastResponse) {
-        // Create AI Run header
         const aiRun = await this.aiRepository.createAiRun(
             businessId,
             new Date(response.generated_at)
         );
 
         try {
-            // Create AI Insights
+            // Save portfolio insights
             await this.aiRepository.createAiInsights({
                 ai_run_id: aiRun.id,
                 pattern_trend_summary: response.portfolio_insights.ai_summary.pattern_trend_summary,
@@ -215,7 +251,7 @@ export class AiService {
                 low: response.portfolio_insights.ai_summary.priority_actions.low,
             });
 
-            // Create AI Recommendations for each product
+            // Save per-product recommendations
             for (const product of response.products) {
                 await this.aiRepository.createAiRecommendation({
                     ai_run_id: aiRun.id,
@@ -225,17 +261,71 @@ export class AiService {
                     quantity_min: product.recommendation.quantity_range.min,
                     quantity_max: product.recommendation.quantity_range.max,
                     risk_level: this.mapRiskLevel(product.stock_analysis.risk_level),
-                    days_until_stockout: product.stock_analysis.days_until_stockout !== null 
-                        ? product.stock_analysis.days_until_stockout 
-                        : 0,
+                    days_until_stockout: product.stock_analysis.days_until_stockout ?? 0,
                     reason_text: product.recommendation.reason,
                 });
             }
 
+            // NEW: Save full AI response (meta, forecasts, analysis)
+            await this.saveDetailedAiOutput(aiRun.id, response);
+
+            await this.aiRepository.updateAiRunStatus(aiRun.id, 'COMPLETED');
             return aiRun;
         } catch (error) {
-            await this.aiRepository.updateAiRunStatus(aiRun.id, 'FAILED', error instanceof Error ? error.message : 'Unknown error');
+            await this.aiRepository.updateAiRunStatus(
+                aiRun.id,
+                'FAILED',
+                error instanceof Error ? error.message : 'Unknown error'
+            );
             throw error;
+        }
+    }
+
+    private async saveDetailedAiOutput(aiRunId: string, response: AIForecastResponse) {
+
+        await this.aiRepository.createAiRunMeta({
+            ai_run_id: aiRunId,
+            model_version: response.model_version,
+            total_products: response.total_products,
+            llm_enabled: response.llm_enabled,
+            llm_success_count: response.llm_success_count,
+            fallback_count: response.fallback_count,
+            total_tokens_used: response.total_tokens_used,
+        });
+
+        await this.aiRepository.createAiPortfolioInsights({
+            ai_run_id: aiRunId,
+            summary: response.portfolio_insights.summary,
+            trends: response.portfolio_insights.trends,
+            priority_actions: response.portfolio_insights.priority_actions,
+            risk_distribution: response.portfolio_insights.risk_distribution,
+        });
+
+        for (const product of response.products) {
+            // Save forecast
+            await this.aiRepository.createAiForecast({
+                ai_run_id: aiRunId,
+                product_id: product.product_id,
+                horizon_days: product.forecast.horizon_days,
+                daily_forecast: product.forecast.daily,
+                total_demand: product.forecast.total_demand,
+                average_per_day: product.forecast.average_per_day,
+                method: product.forecast.method,
+                confidence: product.forecast.confidence,
+            });
+
+            // Save product analysis
+            await this.aiRepository.createAiProductAnalysis({
+                ai_run_id: aiRunId,
+                product_id: product.product_id,
+                days_until_stockout: product.stock_analysis.days_until_stockout,
+                risk_level: this.mapRiskLevel(product.stock_analysis.risk_level),
+                urgency_score: product.stock_analysis.urgency_score,
+                forecast_reliability: product.stock_analysis.forecast_reliability,
+                priority_score: product.business_priority.priority_score,
+                priority_tier: product.business_priority.priority_tier,
+                sales_patterns: product.business_insights.sales_patterns,
+            });
         }
     }
 
